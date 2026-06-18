@@ -218,3 +218,41 @@ export const CONTRATOS: Contrato[] = [
 export function getContrato(ref: string): Contrato | undefined {
   return CONTRATOS.find((c) => c.ref.toLowerCase() === ref.toLowerCase());
 }
+
+export function brl(n: number): string {
+  return "R$ " + n.toLocaleString("pt-BR");
+}
+
+/** Reajustes previstos e ainda não aplicados (dinheiro escapando todo mês). */
+const ATRASADOS = [
+  { ref: "LOC-0356", meses: 4, perdaMensal: 380, indice: "IGP-M +4,1%" },
+  { ref: "LOC-0411", meses: 2, perdaMensal: 210, indice: "IPCA +3,6%" },
+  { ref: "LOC-0298", meses: 5, perdaMensal: 240, indice: "IPCA +3,6%" },
+];
+
+export type Achado = Contrato & { meses: number; perdaMensal: number; perdaTotal: number; indiceAtraso: string };
+
+export function diagnostico() {
+  const atrasados: Achado[] = ATRASADOS.flatMap((a) => {
+    const c = getContrato(a.ref);
+    if (!c) return [];
+    return [{ ...c, meses: a.meses, perdaMensal: a.perdaMensal, perdaTotal: a.meses * a.perdaMensal, indiceAtraso: a.indice }];
+  });
+
+  const deixadoNaMesa = atrasados.reduce((s, a) => s + a.perdaTotal, 0);
+  const perdaMensalTotal = atrasados.reduce((s, a) => s + a.perdaMensal, 0);
+
+  // vencimentos vencidos ou próximos
+  const emRisco = CONTRATOS.filter((c) => c.tom !== "ok");
+  // contratos sem o conjunto mínimo de documentos (contrato + matrícula + IPTU)
+  const semDocs = CONTRATOS.filter((c) => c.documentos.length < 3);
+
+  return {
+    atrasados,
+    deixadoNaMesa,
+    perdaMensalTotal,
+    emRisco,
+    semDocs,
+    totalContratos: CONTRATOS.length,
+  };
+}

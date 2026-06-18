@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CONTRATOS, type Tom } from "@/app/_data/contratos";
+import { ExportCsv } from "@/app/_components/export-csv";
 
 const TOM: Record<Tom, string> = { ok: "bg-ink/40", atencao: "bg-accent", perigo: "bg-danger" };
 const TOM_TXT: Record<Tom, string> = { ok: "text-ink-soft", atencao: "text-accent-2", perigo: "text-danger" };
@@ -14,9 +15,12 @@ export default function CarteiraPage() {
           <span className="text-ink-faint transition hover:text-ink">Residencial</span>
           <span className="text-ink-faint transition hover:text-ink">Comercial</span>
         </div>
-        <span className="font-mono text-[0.72rem] uppercase tracking-[0.12em] text-ink-faint">
-          {CONTRATOS.length} contratos vigentes
-        </span>
+        <div className="flex items-center gap-5">
+          <span className="font-mono text-[0.72rem] uppercase tracking-[0.12em] text-ink-faint">
+            {CONTRATOS.length} contratos vigentes
+          </span>
+          <ExportCsv />
+        </div>
       </div>
 
       {/* cabeçalho da tabela */}
