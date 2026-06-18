@@ -19,6 +19,12 @@ export default function CarteiraPage() {
           <span className="font-mono text-[0.72rem] uppercase tracking-[0.12em] text-ink-faint">
             {CONTRATOS.length} contratos vigentes
           </span>
+          <Link
+            href="/contratos/importar"
+            className="inline-flex h-9 items-center rounded-sm border border-ink/25 px-3 font-mono text-[0.68rem] uppercase tracking-[0.1em] text-ink-soft transition hover:border-ink hover:text-ink"
+          >
+            Importar planilha
+          </Link>
           <ExportCsv />
         </div>
       </div>

@@ -9,11 +9,13 @@ const NAV = [
   { href: "/carteira", label: "Carteira", meta: "Contratos vigentes" },
   { href: "/diagnostico", label: "Diagnóstico", meta: "Raio-X da carteira" },
   { href: "/contratos/novo", label: "Novo contrato", meta: "Cadastrar" },
+  { href: "/contratos/importar", label: "Importar", meta: "Da planilha" },
 ];
 
 function topbar(pathname: string): { kicker: string; title: string } {
   if (pathname.startsWith("/carteira")) return { kicker: "§ Carteira", title: "Contratos vigentes" };
   if (pathname.startsWith("/contratos/novo")) return { kicker: "§ Contratos", title: "Novo contrato" };
+  if (pathname.startsWith("/contratos/importar")) return { kicker: "§ Migração", title: "Importar da planilha" };
   if (pathname.startsWith("/contratos/")) return { kicker: "§ Contrato", title: "Detalhe do contrato" };
   if (pathname.startsWith("/diagnostico")) return { kicker: "§ Diagnóstico", title: "Raio-X da carteira" };
   if (pathname.startsWith("/painel")) return { kicker: "§ Painel", title: "Visão da carteira" };
