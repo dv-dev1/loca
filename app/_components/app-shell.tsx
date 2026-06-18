@@ -13,6 +13,7 @@ const NAV = [
 function topbar(pathname: string): { kicker: string; title: string } {
   if (pathname.startsWith("/carteira")) return { kicker: "§ Carteira", title: "Contratos vigentes" };
   if (pathname.startsWith("/contratos/novo")) return { kicker: "§ Contratos", title: "Novo contrato" };
+  if (pathname.startsWith("/contratos/")) return { kicker: "§ Contrato", title: "Detalhe do contrato" };
   if (pathname.startsWith("/painel")) return { kicker: "§ Painel", title: "Visão da carteira" };
   return { kicker: "§ Locá", title: "Gestão de locação" };
 }

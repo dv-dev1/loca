@@ -84,7 +84,7 @@ export default function NovoContratoPage() {
 
         <Section n="04" title="Documentos">
           <div className="sm:col-span-2">
-            <div className="flex flex-col items-start gap-2 border border-dashed border-line-strong px-6 py-8">
+            <label className="flex cursor-pointer flex-col items-start gap-2 border border-dashed border-line-strong px-6 py-8 transition hover:border-brand hover:bg-paper-2">
               <span className="font-semibold">Anexar documentos</span>
               <span className="text-sm text-ink-soft">
                 Contrato, matrícula, IPTU e aditivos. PDF ou imagem.
@@ -92,7 +92,8 @@ export default function NovoContratoPage() {
               <span className="mt-2 inline-flex h-9 items-center rounded-sm border border-ink/25 px-4 font-mono text-[0.7rem] uppercase tracking-[0.12em] text-ink-soft">
                 Selecionar arquivos
               </span>
-            </div>
+              <input type="file" multiple accept=".pdf,image/*" className="sr-only" />
+            </label>
           </div>
         </Section>
 
