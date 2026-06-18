@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Archivo, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Hanken_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
-const display = Archivo({
+const display = Bricolage_Grotesque({
   variable: "--ff-display",
   subsets: ["latin"],
   weight: ["500", "600", "700", "800"],
 });
 
-const body = IBM_Plex_Sans({
+const body = Hanken_Grotesk({
   variable: "--ff-body",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -34,7 +34,7 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${display.variable} ${body.variable} ${mono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-papel text-tinta font-body">{children}</body>
+      <body className="min-h-full bg-paper text-ink font-body">{children}</body>
     </html>
   );
 }
