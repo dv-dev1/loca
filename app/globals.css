@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Design system — "Cartório Moderno"
+   Locá · gestão de locação para imobiliárias.
+   ============================================================ */
+
+@theme {
+  /* Cores */
+  --color-papel: #f6f5f1;
+  --color-papel-fundo: #efece4;
+  --color-superficie: #ffffff;
+  --color-superficie-2: #fbfaf7;
+
+  --color-tinta: #16180f;
+  --color-tinta-suave: #4f534a;
+  --color-tinta-tenue: #6e7268;
+
+  --color-verde: #143d2f;
+  --color-verde-fundo: #0f2e24;
+  --color-verde-vivo: #2e6b52;
+  --color-verde-claro: #e3ece4;
+  --color-verde-borda: #cadccf;
+
+  --color-latao: #c08a2e;
+  --color-latao-escuro: #946417;
+  --color-latao-claro: #f3e7cd;
+
+  --color-vencido: #a23b2d;
+  --color-vencido-claro: #f4e1dc;
+
+  --color-linha: #e6e3da;
+  --color-linha-forte: #d6d2c6;
+
+  /* Tipografia */
+  --font-display: var(--ff-display), "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--ff-body), "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--ff-mono), "IBM Plex Mono", ui-monospace, monospace;
+
+  /* Sombras (papel, leves) */
+  --shadow-soft: 0 1px 2px rgba(20, 24, 15, 0.04), 0 4px 12px rgba(20, 24, 15, 0.05);
+  --shadow-card: 0 1px 2px rgba(20, 24, 15, 0.05), 0 14px 30px rgba(20, 24, 15, 0.08);
+  --shadow-lift: 0 2px 6px rgba(20, 24, 15, 0.06), 0 30px 60px -12px rgba(20, 24, 15, 0.22);
+  --shadow-float: 0 50px 90px -30px rgba(15, 46, 36, 0.45), 0 18px 40px -20px rgba(20, 24, 15, 0.25);
+
+  /* Animações */
+  --animate-rise: rise 0.6s cubic-bezier(0.33, 1, 0.68, 1) both;
+  --animate-float: float 5s ease-in-out infinite;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: var(--color-papel);
+    background-image:
+      radial-gradient(55% 45% at 100% 0%, color-mix(in srgb, var(--color-verde-vivo) 13%, transparent) 0%, transparent 58%),
+      radial-gradient(38% 38% at 0% 2%, color-mix(in srgb, var(--color-latao) 11%, transparent) 0%, transparent 52%);
+    background-attachment: fixed;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: var(--color-verde);
+    color: var(--color-papel);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-verde-vivo);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: 0.001ms !important; }
+  }
+}
