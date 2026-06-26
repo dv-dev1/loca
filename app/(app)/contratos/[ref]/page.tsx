@@ -1,29 +1,12 @@
 import Link from "next/link";
 import { getContrato } from "@/app/_data/contratos";
+import { ContratoCorpo } from "./ContratoCorpo";
 
 const TOM_CHIP: Record<string, string> = {
   ok: "border-line text-ink-soft",
   atencao: "border-accent/40 text-accent-2",
   perigo: "border-danger/40 text-danger",
 };
-
-function Def({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
-  return (
-    <div className="flex items-baseline justify-between gap-6 border-b border-line py-3">
-      <dt className="font-mono text-[0.7rem] uppercase tracking-[0.12em] text-ink-faint">{label}</dt>
-      <dd className={`text-right ${mono ? "font-mono" : ""} ${mono ? "font-medium" : "font-semibold"}`}>{value}</dd>
-    </div>
-  );
-}
-
-function SectionTitle({ n, title }: { n: string; title: string }) {
-  return (
-    <div className="mb-2 flex items-baseline gap-3">
-      <span className="font-mono text-sm text-accent-2">{n}</span>
-      <h2 className="font-display text-base font-bold tracking-tight">{title}</h2>
-    </div>
-  );
-}
 
 export default async function ContratoPage({ params }: { params: Promise<{ ref: string }> }) {
   const { ref } = await params;
@@ -92,85 +75,7 @@ export default async function ContratoPage({ params }: { params: Promise<{ ref: 
         </div>
       </figure>
 
-      {/* Conteúdo */}
-      <div className="mt-12 grid gap-12 lg:grid-cols-[1.3fr_1fr]">
-        <div className="flex flex-col gap-10">
-          <section>
-            <SectionTitle n="01" title="Imóvel" />
-            <dl>
-              <Def label="Endereço" value={c.endereco} />
-              <Def label="Tipo" value={c.tipo} />
-              <Def label="Matrícula" value={c.matricula} mono />
-              <Def label="Inscrição IPTU" value={c.iptu} mono />
-            </dl>
-          </section>
-          <section>
-            <SectionTitle n="02" title="Partes" />
-            <dl>
-              <Def label="Locador" value={c.locador} />
-              <Def label="CPF / CNPJ" value={c.locadorDoc} mono />
-              <Def label="Locatário" value={c.locatario} />
-              <Def label="CPF / CNPJ" value={c.locatarioDoc} mono />
-            </dl>
-          </section>
-          <section>
-            <SectionTitle n="03" title="Locação" />
-            <dl>
-              <Def label="Aluguel" value={c.aluguel} mono />
-              <Def label="Índice de reajuste" value={c.indice} />
-              <Def label="Periodicidade" value={c.periodicidade} />
-              <Def label="Vigência" value={`${c.inicio} — ${c.fim}`} mono />
-              <Def label="Dia de vencimento" value={c.vencimentoDia} mono />
-              <Def label="Garantia" value={c.garantia} />
-            </dl>
-          </section>
-        </div>
-
-        <div className="flex flex-col gap-10">
-          <section>
-            <SectionTitle n="04" title="Documentos" />
-            <ul>
-              {c.documentos.map((d) => (
-                <li key={d} className="flex items-center justify-between gap-4 border-b border-line py-3">
-                  <span className="flex items-center gap-3 min-w-0">
-                    <svg viewBox="0 0 24 24" className="size-4 shrink-0 text-ink-faint" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" /><path d="M14 3v6h6" /></svg>
-                    <span className="truncate text-sm">{d}</span>
-                  </span>
-                  <a href="#" className="shrink-0 font-mono text-[0.66rem] uppercase tracking-[0.1em] text-brand transition hover:text-brand-2">Baixar</a>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section>
-            <SectionTitle n="05" title="Histórico de reajustes" />
-            <ul>
-              {c.reajustes.map((r) => (
-                <li key={r.data} className="border-b border-line py-3">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="font-mono text-sm">{r.data}</span>
-                    <span className="font-mono text-[0.72rem] text-accent-2">{r.indice}</span>
-                  </div>
-                  <div className="mt-1 text-right font-mono text-sm">
-                    <s className="text-ink-faint no-underline">{r.de}</s>{" "}
-                    <span className="text-ink-faint">→</span>{" "}
-                    <b className="font-semibold">{r.para}</b>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <div className="flex flex-col gap-3">
-            <button className="inline-flex h-12 items-center justify-center rounded-sm bg-brand font-semibold text-paper transition hover:bg-brand-2">
-              Editar contrato
-            </button>
-            <button className="inline-flex h-12 items-center justify-center rounded-sm border border-ink/25 font-semibold transition hover:border-ink">
-              Baixar contrato (PDF)
-            </button>
-          </div>
-        </div>
-      </div>
+      <ContratoCorpo contrato={c} />
     </div>
   );
 }

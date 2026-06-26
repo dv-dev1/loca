@@ -1,18 +1,5 @@
 import Link from "next/link";
-
-function Field({ label, type = "text", placeholder, autoComplete }: { label: string; type?: string; placeholder: string; autoComplete?: string }) {
-  return (
-    <label className="block">
-      <span className="font-mono text-[0.7rem] uppercase tracking-[0.15em] text-ink-faint">{label}</span>
-      <input
-        type={type}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        className="mt-2 w-full border-b border-ink/25 bg-transparent pb-2 text-lg text-ink outline-none transition placeholder:text-ink-faint/70 focus:border-brand"
-      />
-    </label>
-  );
-}
+import { LoginForm } from "./LoginForm";
 
 export default function LoginPage() {
   return (
@@ -54,22 +41,7 @@ export default function LoginPage() {
           <h1 className="mt-3 font-display text-[clamp(2rem,4vw,2.75rem)] font-extrabold tracking-[-0.03em]">Entrar</h1>
           <p className="mt-3 text-ink-soft">Acesse o painel da sua imobiliária.</p>
 
-          <form className="mt-10 flex flex-col gap-7">
-            <Field label="E-mail" type="email" placeholder="voce@imobiliaria.com.br" autoComplete="email" />
-            <Field label="Senha" type="password" placeholder="••••••••" autoComplete="current-password" />
-
-            <div className="mt-2 flex flex-col gap-4">
-              <Link
-                href="/painel"
-                className="inline-flex h-[3.25rem] items-center justify-center rounded-sm bg-brand font-semibold text-paper transition hover:bg-brand-2"
-              >
-                Entrar no painel
-              </Link>
-              <a href="#" className="font-mono text-[0.72rem] uppercase tracking-[0.12em] text-ink-faint transition hover:text-ink">
-                Esqueci minha senha
-              </a>
-            </div>
-          </form>
+          <LoginForm />
         </div>
       </main>
     </div>
