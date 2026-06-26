@@ -163,8 +163,9 @@ export function ContratoCorpo({ contrato }: { contrato: Contrato }) {
                   <span className="truncate text-sm">{d}</span>
                 </span>
                 <a
-                  href={`/contratos/${contrato.ref}/pdf`}
-                  download
+                  href={`/api/doc?ref=${contrato.ref}&nome=${encodeURIComponent(d)}`}
+                  target="_blank"
+                  rel="noreferrer"
                   className="shrink-0 font-mono text-[0.66rem] uppercase tracking-[0.1em] text-brand transition hover:text-brand-2"
                 >
                   Baixar

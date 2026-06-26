@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     // ou outra origem além de localhost — senão o Next bloqueia por CSRF.
     serverActions: {
       allowedOrigins: ["*.trycloudflare.com", "*.cfargotunnel.com", "*.ngrok-free.app", "localhost:3000"],
+      bodySizeLimit: "20mb",
     },
   },
 };
