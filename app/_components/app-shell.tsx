@@ -7,22 +7,44 @@ import type { ReactNode } from "react";
 const NAV = [
   { href: "/painel", label: "Painel", meta: "Visão da carteira" },
   { href: "/carteira", label: "Carteira", meta: "Contratos vigentes" },
+  { href: "/alertas", label: "Alertas", meta: "Reajustes e vencimentos" },
   { href: "/diagnostico", label: "Diagnóstico", meta: "Raio-X da carteira" },
   { href: "/contratos/novo", label: "Novo contrato", meta: "Cadastrar" },
   { href: "/contratos/importar", label: "Importar", meta: "Da planilha" },
 ];
+
+function SinoAlertas({ count }: { count: number }) {
+  return (
+    <Link
+      href="/alertas"
+      aria-label={count > 0 ? `Alertas — ${count} pedindo ação` : "Alertas"}
+      className="relative inline-flex size-11 items-center justify-center rounded-sm text-ink transition hover:bg-paper-2 focus-visible:bg-paper-2"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+      </svg>
+      {count > 0 && (
+        <span className="absolute right-1.5 top-1.5 flex min-w-[1.1rem] items-center justify-center rounded-full bg-danger px-1 font-mono text-[0.62rem] font-bold leading-[1.1rem] text-paper">
+          {count}
+        </span>
+      )}
+    </Link>
+  );
+}
 
 function topbar(pathname: string): { kicker: string; title: string } {
   if (pathname.startsWith("/carteira")) return { kicker: "§ Carteira", title: "Contratos vigentes" };
   if (pathname.startsWith("/contratos/novo")) return { kicker: "§ Contratos", title: "Novo contrato" };
   if (pathname.startsWith("/contratos/importar")) return { kicker: "§ Migração", title: "Importar da planilha" };
   if (pathname.startsWith("/contratos/")) return { kicker: "§ Contrato", title: "Detalhe do contrato" };
+  if (pathname.startsWith("/alertas")) return { kicker: "§ Alertas", title: "Reajustes e vencimentos" };
   if (pathname.startsWith("/diagnostico")) return { kicker: "§ Diagnóstico", title: "Raio-X da carteira" };
   if (pathname.startsWith("/painel")) return { kicker: "§ Painel", title: "Visão da carteira" };
   return { kicker: "§ Locá", title: "Gestão de locação" };
 }
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ children, alertasCount = 0 }: { children: ReactNode; alertasCount?: number }) {
   const pathname = usePathname();
   const bar = topbar(pathname);
 
@@ -71,12 +93,15 @@ export function AppShell({ children }: { children: ReactNode }) {
             <p className="font-mono text-[0.7rem] uppercase tracking-[0.18em] text-ink-faint">{bar.kicker}</p>
             <h1 className="font-display text-lg font-bold tracking-tight">{bar.title}</h1>
           </div>
-          <Link
-            href="/contratos/novo"
-            className="inline-flex h-10 items-center rounded-sm bg-brand px-4 font-mono text-[0.72rem] uppercase tracking-[0.12em] text-paper transition hover:bg-brand-2"
-          >
-            Novo contrato
-          </Link>
+          <div className="flex items-center gap-1.5">
+            <SinoAlertas count={alertasCount} />
+            <Link
+              href="/contratos/novo"
+              className="inline-flex h-10 items-center rounded-sm bg-brand px-4 font-mono text-[0.72rem] uppercase tracking-[0.12em] text-paper transition hover:bg-brand-2"
+            >
+              Novo contrato
+            </Link>
+          </div>
         </header>
 
         <main className="px-5 py-8 sm:px-8 sm:py-10">{children}</main>

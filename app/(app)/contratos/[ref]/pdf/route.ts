@@ -12,7 +12,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ ref: st
 
   const pdf = await generateContratoPdf(contrato);
 
-  return new NextResponse(pdf, {
+  return new NextResponse(Buffer.from(pdf), {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${contrato.ref}.pdf"`,
