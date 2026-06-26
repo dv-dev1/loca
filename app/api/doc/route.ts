@@ -47,5 +47,9 @@ export async function GET(req: NextRequest) {
   }
 
   // Fallback: redireciona para o PDF gerado do contrato.
-  return NextResponse.redirect(new URL(`/contratos/${ref}/pdf`, req.url));
+  // req.nextUrl preserva o host do proxy (Cloudflare/ngrok) — req.url seria localhost.
+  const fallback = req.nextUrl.clone();
+  fallback.pathname = `/contratos/${ref}/pdf`;
+  fallback.search = "";
+  return NextResponse.redirect(fallback);
 }

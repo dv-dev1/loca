@@ -1,25 +1,49 @@
 import Link from "next/link";
 import { getContratos } from "@/app/_data/contratos-db";
-import type { Tom } from "@/app/_data/contratos";
+import type { Tom, Tipo } from "@/app/_data/contratos";
 import { ExportCsv } from "@/app/_components/export-csv";
 
 const TOM: Record<Tom, string> = { ok: "bg-ink/40", atencao: "bg-accent", perigo: "bg-danger" };
 const TOM_TXT: Record<Tom, string> = { ok: "text-ink-soft", atencao: "text-accent-2", perigo: "text-danger" };
 
-export default async function CarteiraPage() {
-  const contratos = await getContratos();
+const FILTROS: { label: string; valor: Tipo | "Todos" }[] = [
+  { label: "Todos", valor: "Todos" },
+  { label: "Residencial", valor: "Residencial" },
+  { label: "Comercial", valor: "Comercial" },
+];
+
+export default async function CarteiraPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tipo?: string }>;
+}) {
+  const { tipo } = await searchParams;
+  const todos = await getContratos();
+  const filtro: Tipo | "Todos" = tipo === "Residencial" || tipo === "Comercial" ? tipo : "Todos";
+  const contratos = filtro === "Todos" ? todos : todos.filter((c) => c.tipo === filtro);
+
   return (
     <div className="flex flex-col gap-8">
       {/* filtros */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-ink/80 pb-4">
         <div className="flex items-center gap-5 font-mono text-[0.72rem] uppercase tracking-[0.12em]">
-          <span className="text-ink">Todos</span>
-          <span className="text-ink-faint transition hover:text-ink">Residencial</span>
-          <span className="text-ink-faint transition hover:text-ink">Comercial</span>
+          {FILTROS.map((f) => {
+            const ativo = filtro === f.valor;
+            const href = f.valor === "Todos" ? "/carteira" : `/carteira?tipo=${f.valor}`;
+            return (
+              <Link
+                key={f.valor}
+                href={href}
+                className={ativo ? "text-ink underline underline-offset-4" : "text-ink-faint transition hover:text-ink"}
+              >
+                {f.label}
+              </Link>
+            );
+          })}
         </div>
         <div className="flex items-center gap-5">
           <span className="font-mono text-[0.72rem] uppercase tracking-[0.12em] text-ink-faint">
-            {contratos.length} contratos vigentes
+            {contratos.length} contrato{contratos.length !== 1 ? "s" : ""} vigente{contratos.length !== 1 ? "s" : ""}
           </span>
           <Link
             href="/contratos/importar"
@@ -41,33 +65,39 @@ export default async function CarteiraPage() {
       </div>
 
       <ul className="-mt-2">
-        {contratos.map((c) => (
-          <li key={c.ref}>
-            <Link
-              href={`/contratos/${c.ref}`}
-              className="grid grid-cols-1 items-center gap-y-2 border-b border-line py-4 transition hover:bg-paper-2 lg:grid-cols-[1.6fr_1.2fr_0.8fr_0.8fr_1fr] lg:gap-4 lg:px-2"
-            >
-              <div className="flex min-w-0 items-center gap-3">
-                <span className={`size-2 shrink-0 ${TOM[c.tom]}`} />
-                <div className="min-w-0">
-                  <div className="truncate font-semibold">{c.imovel}</div>
-                  <div className="font-mono text-[0.7rem] uppercase tracking-[0.08em] text-ink-faint">{c.ref}</div>
-                </div>
-              </div>
-              <div className="truncate pl-5 text-ink-soft lg:pl-0">{c.locatario}</div>
-              <div className="pl-5 lg:pl-0">
-                <span className="inline-block border border-line px-2 py-0.5 font-mono text-[0.64rem] uppercase tracking-[0.1em] text-ink-soft">
-                  {c.tipo}
-                </span>
-              </div>
-              <div className="pl-5 font-mono font-semibold lg:pl-0 lg:text-right">{c.aluguel}</div>
-              <div className="pl-5 lg:pl-0 lg:text-right">
-                <span className={`font-mono text-sm font-medium ${TOM_TXT[c.tom]}`}>{c.evento} </span>
-                <span className="font-mono text-sm text-ink-faint">{c.data}</span>
-              </div>
-            </Link>
+        {contratos.length === 0 ? (
+          <li className="py-12 text-center text-ink-soft">
+            Nenhum contrato {filtro !== "Todos" ? (filtro as string).toLowerCase() : ""} encontrado.
           </li>
-        ))}
+        ) : (
+          contratos.map((c) => (
+            <li key={c.ref}>
+              <Link
+                href={`/contratos/${c.ref}`}
+                className="grid grid-cols-1 items-center gap-y-2 border-b border-line py-4 transition hover:bg-paper-2 lg:grid-cols-[1.6fr_1.2fr_0.8fr_0.8fr_1fr] lg:gap-4 lg:px-2"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className={`size-2 shrink-0 ${TOM[c.tom]}`} />
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold">{c.imovel}</div>
+                    <div className="font-mono text-[0.7rem] uppercase tracking-[0.08em] text-ink-faint">{c.ref}</div>
+                  </div>
+                </div>
+                <div className="truncate pl-5 text-ink-soft lg:pl-0">{c.locatario}</div>
+                <div className="pl-5 lg:pl-0">
+                  <span className="inline-block border border-line px-2 py-0.5 font-mono text-[0.64rem] uppercase tracking-[0.1em] text-ink-soft">
+                    {c.tipo}
+                  </span>
+                </div>
+                <div className="pl-5 font-mono font-semibold lg:pl-0 lg:text-right">{c.aluguel}</div>
+                <div className="pl-5 lg:pl-0 lg:text-right">
+                  <span className={`font-mono text-sm font-medium ${TOM_TXT[c.tom]}`}>{c.evento} </span>
+                  <span className="font-mono text-sm text-ink-faint">{c.data}</span>
+                </div>
+              </Link>
+            </li>
+          ))
+        )}
       </ul>
     </div>
   );

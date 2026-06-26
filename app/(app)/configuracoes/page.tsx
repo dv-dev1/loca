@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getOrgSettings } from "@/lib/supabase/org";
 import { createClient } from "@/lib/supabase/server";
@@ -16,6 +17,7 @@ async function salvar(formData: FormData) {
     .eq("id", 1);
   revalidatePath("/configuracoes");
   revalidatePath("/cliente");
+  redirect("/configuracoes?saved=1");
 }
 
 function Campo({ label, name, defaultValue, hint, type = "text" }: { label: string; name: string; defaultValue?: string; hint?: string; type?: string }) {
@@ -33,7 +35,12 @@ function Campo({ label, name, defaultValue, hint, type = "text" }: { label: stri
   );
 }
 
-export default async function ConfiguracoesPage() {
+export default async function ConfiguracoesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string }>;
+}) {
+  const { saved } = await searchParams;
   const org = await getOrgSettings();
 
   return (
@@ -43,6 +50,12 @@ export default async function ConfiguracoesPage() {
       <p className="mt-2 text-ink-soft">
         Usados no portal do locador e no canal de contato. O WhatsApp aqui é o número que aparece para os clientes.
       </p>
+
+      {saved === "1" && (
+        <div className="mt-5 rounded-sm border border-accent/40 bg-accent/10 px-4 py-3 font-mono text-[0.78rem] text-accent-2">
+          Configurações salvas com sucesso.
+        </div>
+      )}
 
       <form action={salvar} className="mt-8 flex flex-col gap-6">
         <Campo label="Nome" name="nome" defaultValue={org.nome} />

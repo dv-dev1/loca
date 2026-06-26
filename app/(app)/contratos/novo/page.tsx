@@ -68,9 +68,9 @@ export default function NovoContratoPage() {
         <div className="border-t border-line" />
 
         <Section n="02" title="Partes">
-          <Field label="Locador (proprietário)" name="locador" placeholder="Nome completo" />
+          <Field label="Locador (proprietário)" name="locador" placeholder="Nome completo" required />
           <Field label="CPF / CNPJ do locador" name="locadorDoc" placeholder="000.000.000-00" />
-          <Field label="Locatário (inquilino)" name="locatario" placeholder="Nome completo" />
+          <Field label="Locatário (inquilino)" name="locatario" placeholder="Nome completo" required />
           <Field label="CPF / CNPJ do locatário" name="locatarioDoc" placeholder="000.000.000-00" />
         </Section>
 

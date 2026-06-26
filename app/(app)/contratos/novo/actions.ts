@@ -15,8 +15,12 @@ function proximaRef(refs: string[]): string {
 }
 
 function valorNumerico(raw: string): number {
-  const digits = raw.replace(/[^\d]/g, "");
-  return digits ? Number(digits) : 0;
+  // Remove tudo exceto dígitos e vírgula (separador decimal no BR).
+  // "R$ 3.100,00" → "3100,00" → "3100" → 3100
+  let s = raw.replace(/[^\d,]/g, "");
+  const comma = s.indexOf(",");
+  if (comma !== -1) s = s.slice(0, comma); // descarta centavos
+  return s ? Number(s) : 0;
 }
 
 async function garantirBucket(admin: ReturnType<typeof createAdminClient>) {
@@ -42,7 +46,13 @@ export async function criarContrato(formData: FormData) {
   const ref = proximaRef(((existentes as { ref: string }[] | null) ?? []).map((r) => r.ref));
 
   const get = (k: string) => String(formData.get(k) ?? "").trim();
-  const imovel = get("imovel") || get("endereco") || "Imóvel sem identificação";
+  const imovel = get("imovel") || get("endereco") || "";
+
+  if (!imovel) throw new Error("Identificação do imóvel é obrigatória.");
+  if (!get("inicio")) throw new Error("Data de início é obrigatória.");
+  if (!get("fim")) throw new Error("Data de fim é obrigatória.");
+  if (!get("locador")) throw new Error("Nome do locador é obrigatório.");
+  if (!get("locatario")) throw new Error("Nome do locatário é obrigatório.");
 
   // Insere o contrato e recupera o UUID para vincular os documentos.
   const { data: novoContrato, error: insertErr } = await supabase
