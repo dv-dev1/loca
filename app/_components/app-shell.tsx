@@ -11,6 +11,7 @@ const NAV = [
   { href: "/diagnostico", label: "Diagnóstico", meta: "Raio-X da carteira" },
   { href: "/contratos/novo", label: "Novo contrato", meta: "Cadastrar" },
   { href: "/contratos/importar", label: "Importar", meta: "Da planilha" },
+  { href: "/locadores", label: "Locadores", meta: "Acessos do cliente" },
   { href: "/configuracoes", label: "Configurações", meta: "Dados da imobiliária" },
 ];
 
@@ -40,6 +41,7 @@ function topbar(pathname: string): { kicker: string; title: string } {
   if (pathname.startsWith("/contratos/importar")) return { kicker: "§ Migração", title: "Importar da planilha" };
   if (pathname.startsWith("/contratos/")) return { kicker: "§ Contrato", title: "Detalhe do contrato" };
   if (pathname.startsWith("/alertas")) return { kicker: "§ Alertas", title: "Reajustes e vencimentos" };
+  if (pathname.startsWith("/locadores")) return { kicker: "§ Locadores", title: "Acessos do cliente" };
   if (pathname.startsWith("/configuracoes")) return { kicker: "§ Configurações", title: "Dados da imobiliária" };
   if (pathname.startsWith("/diagnostico")) return { kicker: "§ Diagnóstico", title: "Raio-X da carteira" };
   if (pathname.startsWith("/painel")) return { kicker: "§ Painel", title: "Visão da carteira" };
