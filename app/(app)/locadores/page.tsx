@@ -20,9 +20,9 @@ export default async function LocadoresPage() {
   return (
     <div className="max-w-2xl">
       <p className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-ink-faint">§ Locadores</p>
-      <h1 className="mt-3 font-display text-2xl font-bold tracking-tight">Convidar locador</h1>
+      <h1 className="mt-3 font-display text-2xl font-bold tracking-tight">Acesso do locador</h1>
       <p className="mt-2 max-w-[52ch] text-ink-soft">
-        Crie um acesso para o proprietário e escolha quais contratos ele acompanha. Ele verá apenas os imóveis
+        Crie um e-mail e senha para o proprietário acompanhar os contratos dele. Ele verá apenas os imóveis
         marcados aqui, com o canal de WhatsApp da imobiliária.
       </p>
 
