@@ -11,23 +11,35 @@ export default async function DiagnosticoPage() {
   return (
     <div className="flex flex-col gap-14">
       {/* Achado principal */}
-      <section className="bg-brand-deep px-7 py-10 sm:px-12 sm:py-14">
-        <p className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-accent">O custo de continuar assim</p>
-        <p className="mt-5 font-display text-[clamp(2.6rem,7vw,5rem)] font-extrabold leading-[0.95] tracking-[-0.03em] text-paper">
-          {brl(d.deixadoNaMesa)}
-        </p>
-        <p className="mt-4 max-w-[46ch] text-lg leading-relaxed text-paper/70">
-          deixados na mesa nos últimos 12 meses — e{" "}
-          <span className="font-semibold text-accent">{brl(d.perdaMensalTotal)}/mês</span>{" "}
-          ainda escapando em reajustes previstos e não aplicados.
-        </p>
-        <Link
-          href="#reajustes"
-          className="mt-8 inline-flex items-center gap-2 font-mono text-[0.72rem] uppercase tracking-[0.12em] text-paper"
-        >
-          Ver onde está vazando <span>↓</span>
-        </Link>
-      </section>
+      {d.deixadoNaMesa > 0 ? (
+        <section className="bg-brand-deep px-7 py-10 sm:px-12 sm:py-14">
+          <p className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-accent">O custo de continuar assim</p>
+          <p className="mt-5 font-display text-[clamp(2.6rem,7vw,5rem)] font-extrabold leading-[0.95] tracking-[-0.03em] text-paper">
+            {brl(d.deixadoNaMesa)}
+          </p>
+          <p className="mt-4 max-w-[46ch] text-lg leading-relaxed text-paper/70">
+            deixados na mesa nos últimos 12 meses — e{" "}
+            <span className="font-semibold text-accent">{brl(d.perdaMensalTotal)}/mês</span>{" "}
+            ainda escapando em reajustes previstos e não aplicados.
+          </p>
+          <Link
+            href="#reajustes"
+            className="mt-8 inline-flex items-center gap-2 font-mono text-[0.72rem] uppercase tracking-[0.12em] text-paper"
+          >
+            Ver onde está vazando <span>↓</span>
+          </Link>
+        </section>
+      ) : (
+        <section className="bg-brand-deep px-7 py-10 sm:px-12 sm:py-14">
+          <p className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-accent">Reajustes em dia</p>
+          <p className="mt-5 font-display text-[clamp(2.4rem,6vw,4rem)] font-extrabold leading-[0.98] tracking-[-0.03em] text-paper">
+            Nada escapando agora.
+          </p>
+          <p className="mt-4 max-w-[48ch] text-lg leading-relaxed text-paper/70">
+            Todos os reajustes previstos foram aplicados. Abaixo, o que ainda merece atenção na carteira.
+          </p>
+        </section>
+      )}
 
       {/* Resumo */}
       <section className="grid grid-cols-1 border-y border-ink/15 sm:grid-cols-3">
@@ -73,6 +85,7 @@ export default async function DiagnosticoPage() {
             </li>
           ))}
         </ul>
+        {d.atrasados.length === 0 && <p className="py-6 text-ink-soft">Todos os reajustes previstos foram aplicados.</p>}
       </section>
 
       {/* §02 Vencimentos em risco */}
@@ -97,6 +110,7 @@ export default async function DiagnosticoPage() {
             </li>
           ))}
         </ul>
+        {d.emRisco.length === 0 && <p className="py-6 text-ink-soft">Nenhum vencimento dentro da janela de risco.</p>}
       </section>
 
       {/* §03 Documentos faltando */}
@@ -118,6 +132,7 @@ export default async function DiagnosticoPage() {
             </li>
           ))}
         </ul>
+        {d.semDocs.length === 0 && <p className="py-6 text-ink-soft">Todos os contratos com a documentação mínima.</p>}
       </section>
 
       <div className="flex flex-wrap items-center gap-x-7 gap-y-4 border-t border-ink/80 pt-8">
