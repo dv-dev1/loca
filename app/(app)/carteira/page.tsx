@@ -1,11 +1,13 @@
 import Link from "next/link";
-import { CONTRATOS, type Tom } from "@/app/_data/contratos";
+import { getContratos } from "@/app/_data/contratos-db";
+import type { Tom } from "@/app/_data/contratos";
 import { ExportCsv } from "@/app/_components/export-csv";
 
 const TOM: Record<Tom, string> = { ok: "bg-ink/40", atencao: "bg-accent", perigo: "bg-danger" };
 const TOM_TXT: Record<Tom, string> = { ok: "text-ink-soft", atencao: "text-accent-2", perigo: "text-danger" };
 
-export default function CarteiraPage() {
+export default async function CarteiraPage() {
+  const contratos = await getContratos();
   return (
     <div className="flex flex-col gap-8">
       {/* filtros */}
@@ -17,7 +19,7 @@ export default function CarteiraPage() {
         </div>
         <div className="flex items-center gap-5">
           <span className="font-mono text-[0.72rem] uppercase tracking-[0.12em] text-ink-faint">
-            {CONTRATOS.length} contratos vigentes
+            {contratos.length} contratos vigentes
           </span>
           <Link
             href="/contratos/importar"
@@ -25,7 +27,7 @@ export default function CarteiraPage() {
           >
             Importar planilha
           </Link>
-          <ExportCsv />
+          <ExportCsv contratos={contratos} />
         </div>
       </div>
 
@@ -39,7 +41,7 @@ export default function CarteiraPage() {
       </div>
 
       <ul className="-mt-2">
-        {CONTRATOS.map((c) => (
+        {contratos.map((c) => (
           <li key={c.ref}>
             <Link
               href={`/contratos/${c.ref}`}

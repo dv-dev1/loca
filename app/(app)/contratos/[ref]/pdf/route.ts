@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getContrato } from "@/app/_data/contratos";
+import { getContratoByRef } from "@/app/_data/contratos-db";
 import { generateContratoPdf } from "@/lib/pdf/contrato";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ ref: string }> }) {
   const { ref } = await params;
-  const contrato = getContrato(decodeURIComponent(ref));
+  const contrato = await getContratoByRef(decodeURIComponent(ref));
 
   if (!contrato) {
     return NextResponse.json({ error: "Contrato não encontrado" }, { status: 404 });

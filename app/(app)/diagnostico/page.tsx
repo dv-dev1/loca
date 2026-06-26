@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { diagnostico, brl } from "@/app/_data/contratos";
+import { brl } from "@/app/_data/contratos";
+import { getDiagnosticoDb } from "@/app/_data/contratos-db";
 
 const TOM: Record<string, string> = { ok: "bg-ink/40", atencao: "bg-accent", perigo: "bg-danger" };
 const TOM_TXT: Record<string, string> = { ok: "text-ink-soft", atencao: "text-accent-2", perigo: "text-danger" };
 
-export default function DiagnosticoPage() {
-  const d = diagnostico();
+export default async function DiagnosticoPage() {
+  const d = await getDiagnosticoDb();
 
   return (
     <div className="flex flex-col gap-14">

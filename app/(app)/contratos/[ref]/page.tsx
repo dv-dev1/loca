@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getContrato } from "@/app/_data/contratos";
+import { getContratoByRef } from "@/app/_data/contratos-db";
 import { ContratoCorpo } from "./ContratoCorpo";
 
 const TOM_CHIP: Record<string, string> = {
@@ -10,7 +10,7 @@ const TOM_CHIP: Record<string, string> = {
 
 export default async function ContratoPage({ params }: { params: Promise<{ ref: string }> }) {
   const { ref } = await params;
-  const c = getContrato(decodeURIComponent(ref));
+  const c = await getContratoByRef(decodeURIComponent(ref));
 
   if (!c) {
     return (

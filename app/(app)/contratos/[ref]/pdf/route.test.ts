@@ -1,5 +1,14 @@
-import { describe, expect, it } from "vitest";
-import { GET } from "./route";
+import { describe, expect, it, vi } from "vitest";
+import { CONTRATOS } from "@/app/_data/contratos";
+
+// A rota lê do banco; aqui mockamos o loader para testar só o comportamento HTTP.
+vi.mock("@/app/_data/contratos-db", () => ({
+  getContratoByRef: vi.fn(async (ref: string) =>
+    CONTRATOS.find((c) => c.ref.toLowerCase() === ref.toLowerCase()),
+  ),
+}));
+
+const { GET } = await import("./route");
 
 describe("GET /contratos/[ref]/pdf", () => {
   it("retorna um PDF para um contrato existente", async () => {

@@ -1,15 +1,15 @@
 "use client";
 
-import { CONTRATOS } from "@/app/_data/contratos";
+import type { Contrato } from "@/app/_data/contratos";
 
 const HEADERS = [
   "Referência", "Imóvel", "Endereço", "Tipo", "Locador", "Locatário",
   "Aluguel", "Índice", "Vencimento (dia)", "Início", "Fim", "Garantia", "Próximo evento", "Data",
 ];
 
-export function ExportCsv() {
+export function ExportCsv({ contratos }: { contratos: Contrato[] }) {
   function exportar() {
-    const rows = CONTRATOS.map((c) => [
+    const rows = contratos.map((c) => [
       c.ref, c.imovel, c.endereco, c.tipo, c.locador, c.locatario,
       c.aluguel, c.indice, c.vencimentoDia, c.inicio, c.fim, c.garantia, c.evento, c.data,
     ]);

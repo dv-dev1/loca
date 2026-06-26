@@ -1,48 +1,41 @@
 import Link from "next/link";
+import { brl } from "@/app/_data/contratos";
+import { getContratos } from "@/app/_data/contratos-db";
+import { type Severidade, alertasDaCarteira } from "@/lib/domain/alertas";
+import { formatMesAno } from "@/lib/domain/datas";
 
-const STATS = [
-  { n: "128", l: "contratos ativos" },
-  { n: "4", l: "vencem em 30 dias", tone: "accent" },
-  { n: "9", l: "reajustes neste mês" },
-  { n: "R$ 612 mil", l: "aluguel sob gestão / mês" },
-];
+const DOT: Record<Severidade, string> = { perigo: "bg-danger", atencao: "bg-accent", info: "bg-ink/40" };
+const TXT: Record<Severidade, string> = { perigo: "text-danger", atencao: "text-accent-2", info: "text-ink-soft" };
 
-const VENCIMENTOS = [
-  { ref: "LOC-0388", imovel: "Casa · R. das Acácias, 120", quem: "Família Ribeiro", dias: -3, data: "15 jun 2026", tom: "perigo" },
-  { ref: "LOC-0429", imovel: "Apto 302 · Ed. Aurora", quem: "Marina Lopes", dias: 8, data: "30 jun 2026", tom: "atencao" },
-  { ref: "LOC-0411", imovel: "Sala 14 · Empresarial Norte", quem: "Contábil Vega ME", dias: 21, data: "13 jul 2026", tom: "ok" },
-  { ref: "LOC-0356", imovel: "Loja 3 · Galeria Sul", quem: "Ótica Mirante", dias: 27, data: "19 jul 2026", tom: "ok" },
-];
-
-const REAJUSTES = [
-  { ref: "LOC-0429", imovel: "Apto 302 · Ed. Aurora", indice: "IGP-M +4,1%", de: "R$ 2.400", para: "R$ 2.498" },
-  { ref: "LOC-0402", imovel: "Sala 14 · Empresarial Norte", indice: "IPCA +3,6%", de: "R$ 5.200", para: "R$ 5.387" },
-  { ref: "LOC-0377", imovel: "Loja 3 · Galeria Sul", indice: "IGP-M +4,1%", de: "R$ 8.900", para: "R$ 9.265" },
-];
-
-const TOM: Record<string, string> = {
-  ok: "bg-ink/40",
-  atencao: "bg-accent",
-  perigo: "bg-danger",
-};
-const TOM_TXT: Record<string, string> = {
-  ok: "text-ink",
-  atencao: "text-accent-2",
-  perigo: "text-danger",
-};
-
-function prazo(dias: number): string {
-  if (dias < 0) return `vencido há ${Math.abs(dias)}d`;
-  if (dias === 0) return "vence hoje";
-  return `em ${dias}d`;
+function prazo(meses: number): string {
+  if (meses <= 0) return "neste mês";
+  if (meses === 1) return "em 1 mês";
+  return `em ${meses} meses`;
 }
 
-export default function PainelPage() {
+function valor(aluguel: string): number {
+  return Number(aluguel.replace(/\D/g, "")) || 0;
+}
+
+export default async function PainelPage() {
+  const contratos = await getContratos();
+  const hoje = new Date();
+  const alertas = alertasDaCarteira(contratos, hoje);
+  const vencimentos = alertas.filter((a) => a.tipo === "vencimento");
+  const reajustes = alertas.filter((a) => a.tipo === "reajuste");
+  const sobGestao = contratos.reduce((s, c) => s + valor(c.aluguel), 0);
+
+  const stats = [
+    { n: String(contratos.length), l: "contratos ativos" },
+    { n: String(vencimentos.length), l: "vencimentos a caminho", tone: vencimentos.length > 0 ? "accent" : undefined },
+    { n: String(reajustes.length), l: "reajustes na janela" },
+    { n: brl(sobGestao), l: "aluguel sob gestão / mês" },
+  ];
+
   return (
     <div className="flex flex-col gap-14">
-      {/* Números */}
       <section className="grid grid-cols-2 border-y border-ink/15 lg:grid-cols-4">
-        {STATS.map((s, i) => (
+        {stats.map((s, i) => (
           <div
             key={s.l}
             className={`py-7 ${i % 2 !== 0 ? "border-l border-line pl-6" : ""} lg:border-l lg:pl-6 ${i === 0 ? "lg:border-l-0 lg:pl-0" : ""} ${i < 2 ? "border-b border-line lg:border-b-0" : ""} ${i === 0 ? "pl-0" : ""}`}
@@ -56,7 +49,6 @@ export default function PainelPage() {
       </section>
 
       <div className="grid gap-12 lg:grid-cols-[1.25fr_1fr]">
-        {/* Vencimentos */}
         <section>
           <div className="flex items-end justify-between border-b border-ink/80 pb-4">
             <h2 className="font-display text-xl font-bold tracking-tight">Próximos vencimentos</h2>
@@ -64,48 +56,58 @@ export default function PainelPage() {
               Ver carteira →
             </Link>
           </div>
-          <ul>
-            {VENCIMENTOS.map((v) => (
-              <li key={v.ref} className="flex items-center gap-4 border-b border-line py-4">
-                <span className={`size-2 shrink-0 ${TOM[v.tom]}`} />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-semibold">{v.imovel}</div>
-                  <div className="font-mono text-[0.72rem] uppercase tracking-[0.08em] text-ink-faint">
-                    {v.ref} · {v.quem}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className={`font-mono text-sm font-semibold ${TOM_TXT[v.tom]}`}>{prazo(v.dias)}</div>
-                  <div className="font-mono text-[0.72rem] text-ink-faint">{v.data}</div>
-                </div>
-              </li>
-            ))}
-          </ul>
+          {vencimentos.length > 0 ? (
+            <ul>
+              {vencimentos.slice(0, 6).map((v) => (
+                <li key={`${v.ref}-venc`}>
+                  <Link href={`/contratos/${v.ref}`} className="flex items-center gap-4 border-b border-line py-4 transition hover:bg-paper-2">
+                    <span className={`size-2 shrink-0 ${DOT[v.severidade]}`} />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-semibold">{v.contrato.imovel}</div>
+                      <div className="font-mono text-[0.72rem] uppercase tracking-[0.08em] text-ink-faint">
+                        {v.ref} · {v.contrato.locatario}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`font-mono text-sm font-semibold ${TXT[v.severidade]}`}>{prazo(v.mesesRestantes)}</div>
+                      <div className="font-mono text-[0.72rem] text-ink-faint">{formatMesAno(v.data)}</div>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="py-6 text-ink-soft">Nenhum vencimento dentro da janela de antecedência.</p>
+          )}
         </section>
 
-        {/* Reajustes */}
         <section>
           <div className="flex items-end justify-between border-b border-ink/80 pb-4">
-            <h2 className="font-display text-xl font-bold tracking-tight">Reajustes deste mês</h2>
+            <h2 className="font-display text-xl font-bold tracking-tight">Reajustes a caminho</h2>
+            <Link href="/alertas" className="font-mono text-[0.7rem] uppercase tracking-[0.12em] text-ink-faint transition hover:text-ink">
+              Ver alertas →
+            </Link>
           </div>
-          <ul>
-            {REAJUSTES.map((r) => (
-              <li key={r.ref} className="border-b border-line py-4">
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="truncate font-semibold">{r.imovel}</span>
-                  <span className="shrink-0 font-mono text-[0.72rem] text-accent-2">{r.indice}</span>
-                </div>
-                <div className="mt-1 flex items-baseline gap-2 font-mono text-sm">
-                  <span className="text-ink-faint">{r.ref}</span>
-                  <span className="ml-auto">
-                    <s className="text-ink-faint no-underline">{r.de}</s>{" "}
-                    <span className="text-ink-faint">→</span>{" "}
-                    <b className="font-semibold">{r.para}</b>
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
+          {reajustes.length > 0 ? (
+            <ul>
+              {reajustes.slice(0, 6).map((r) => (
+                <li key={`${r.ref}-reaj`}>
+                  <Link href={`/contratos/${r.ref}`} className="block border-b border-line py-4 transition hover:bg-paper-2">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="truncate font-semibold">{r.contrato.imovel}</span>
+                      <span className="shrink-0 font-mono text-[0.72rem] text-accent-2">{r.contrato.indice}</span>
+                    </div>
+                    <div className="mt-1 flex items-baseline justify-between gap-2 font-mono text-sm">
+                      <span className="text-ink-faint">{r.ref}</span>
+                      <span className={TXT[r.severidade]}>{prazo(r.mesesRestantes)} · {formatMesAno(r.data)}</span>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="py-6 text-ink-soft">Nenhum reajuste dentro da janela de antecedência.</p>
+          )}
         </section>
       </div>
     </div>

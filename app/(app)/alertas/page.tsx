@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CONTRATOS } from "@/app/_data/contratos";
+import { getContratos } from "@/app/_data/contratos-db";
 import { type Alerta, type Severidade, alertasDaCarteira } from "@/lib/domain/alertas";
 import { formatMesAno } from "@/lib/domain/datas";
 
@@ -73,9 +73,9 @@ function Secao({ id, n, titulo, descricao, alertas }: { id: string; n: string; t
   );
 }
 
-export default function AlertasPage() {
+export default async function AlertasPage() {
   const hoje = new Date();
-  const alertas = alertasDaCarteira(CONTRATOS, hoje);
+  const alertas = alertasDaCarteira(await getContratos(), hoje);
   const reajustes = alertas.filter((a) => a.tipo === "reajuste");
   const vencimentos = alertas.filter((a) => a.tipo === "vencimento");
 
