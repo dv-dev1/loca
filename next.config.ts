@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Libera recursos de dev (HMR) quando acessados por um túnel — senão o Next
+  // bloqueia como cross-origin e o client bundle não conecta direito.
+  allowedDevOrigins: ["*.trycloudflare.com", "*.cfargotunnel.com", "*.ngrok-free.app"],
   experimental: {
     // Libera as Server Actions quando acessadas por um túnel (Cloudflare/ngrok)
     // ou outra origem além de localhost — senão o Next bloqueia por CSRF.
