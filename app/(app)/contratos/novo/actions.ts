@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProfile } from "@/lib/supabase/profile";
+import { type ExtrairContratoResultado, extrairContratoDoPdf } from "@/lib/ia/extrair-contrato";
 
 function proximaRef(refs: string[]): string {
   const max = refs.reduce((m, r) => {
@@ -114,4 +115,23 @@ export async function criarContrato(formData: FormData) {
   revalidatePath("/carteira");
   revalidatePath("/painel");
   redirect("/carteira");
+}
+
+/** Extrai os dados de um contrato a partir do PDF assinado, via IA, para pré-preencher o formulário. */
+export async function extrairContrato(formData: FormData): Promise<ExtrairContratoResultado> {
+  const profile = await getProfile();
+  if (profile?.papel !== "admin") {
+    return { ok: false, message: "Apenas administradores podem usar a extração automática." };
+  }
+
+  const arquivo = formData.get("arquivo");
+  if (!(arquivo instanceof File) || arquivo.size === 0) {
+    return { ok: false, message: "Nenhum arquivo recebido." };
+  }
+  if (arquivo.type !== "application/pdf") {
+    return { ok: false, message: "Envie um arquivo PDF." };
+  }
+
+  const buffer = Buffer.from(await arquivo.arrayBuffer());
+  return extrairContratoDoPdf({ buffer, filename: arquivo.name });
 }

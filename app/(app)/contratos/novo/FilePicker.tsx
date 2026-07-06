@@ -1,14 +1,31 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-export function FilePicker() {
+/** `extraFile`: PDF já usado na extração automática — entra sozinho na lista de documentos. */
+export function FilePicker({ extraFile }: { extraFile?: File | null }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [nomes, setNomes] = useState<string[]>([]);
+  const extraFileInjetado = useRef<File | null>(null);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setNomes(Array.from(e.currentTarget.files ?? []).map((f) => f.name));
   }
+
+  useEffect(() => {
+    if (!extraFile || extraFile === extraFileInjetado.current || !inputRef.current) return;
+
+    const atuais = Array.from(inputRef.current.files ?? []);
+    const jaSelecionado = atuais.some((f) => f.name === extraFile.name && f.size === extraFile.size);
+    extraFileInjetado.current = extraFile;
+    if (jaSelecionado) return;
+
+    const dataTransfer = new DataTransfer();
+    for (const f of atuais) dataTransfer.items.add(f);
+    dataTransfer.items.add(extraFile);
+    inputRef.current.files = dataTransfer.files;
+    setNomes(Array.from(dataTransfer.files).map((f) => f.name));
+  }, [extraFile]);
 
   return (
     <label className="flex cursor-pointer flex-col items-start gap-2 border border-dashed border-line-strong px-6 py-8 transition hover:border-brand hover:bg-paper-2">
