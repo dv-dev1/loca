@@ -1,10 +1,13 @@
-// Extração automática de dados de contrato a partir de um PDF, via OpenAI
-// (Responses API + Structured Outputs). Nunca lança — qualquer falha (chave
-// ausente, rede, JSON malformado) vira { ok: false, message } em pt-BR, para
-// o formulário de cadastro degradar de volta ao preenchimento manual.
+// Extração automática de dados de contrato a partir de um PDF, via Ollama Cloud
+// (endpoint compatível com Chat Completions + Structured Outputs). O texto do PDF
+// é extraído localmente (lib/ia/pdf-texto.ts) e enviado ao modelo. Nunca lança —
+// qualquer falha (chave ausente, PDF sem texto, rede, JSON malformado) vira
+// { ok: false, message } em pt-BR, para o formulário de cadastro degradar de
+// volta ao preenchimento manual.
 
 import OpenAI from "openai";
 import { GARANTIA_OPCOES, INDICE_OPCOES, TIPO_OPCOES } from "@/lib/contratos/opcoes";
+import { extrairTextoDoPdf } from "./pdf-texto";
 
 export type CampoContratoIA = {
   imovel: string | null;
@@ -30,6 +33,12 @@ export type ExtrairContratoResultado =
 
 const MENSAGEM_INDISPONIVEL = "Extração automática indisponível — preencha os campos manualmente.";
 const MENSAGEM_FALHA = "Não foi possível ler o PDF agora. Preencha os campos manualmente.";
+const MENSAGEM_SEM_TEXTO =
+  "Este PDF parece ser uma imagem/escaneado, sem texto legível. Preencha os campos manualmente.";
+
+// Endpoint compatível com OpenAI do Ollama Cloud/Turbo; modelo forte em saída JSON.
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "https://ollama.com/v1";
+const MODELO_PADRAO = "gpt-oss:120b";
 
 function campoEnum(opcoes: readonly string[], descricao: string) {
   return { type: ["string", "null"], enum: [...opcoes, null], description: descricao };
@@ -62,16 +71,36 @@ const SCHEMA = {
   additionalProperties: false,
 } as const;
 
-const PROMPT = `Você recebe um contrato de locação de imóvel brasileiro em PDF. Extraia os campos pedidos no schema.
-Regras:
-- Se um campo não estiver claramente presente no documento, retorne null para ele — nunca invente ou estime valores.
-- Datas ("inicio", "fim") devem vir no formato yyyy-mm-dd.
-- "aluguel" e "vencimentoDia" devem vir só como dígitos (e ponto decimal no caso do aluguel), sem "R$", sem separador de milhar, sem vírgula decimal.
-- "tipo", "indice" e "garantia" devem usar exatamente um dos valores permitidos no schema, ou null se não for possível determinar com confiança.`;
+// O endpoint do Ollama trata o json_schema como dica frouxa (chega a inventar
+// nomes de chave), então o contrato de campos/valores vai explícito no prompt —
+// é isto que garante a saída no formato de CampoContratoIA.
+const PROMPT = `Você recebe o texto de um contrato de locação de imóvel brasileiro.
+Responda APENAS com um objeto JSON contendo EXATAMENTE estas chaves (use null quando o dado não estiver claramente presente — nunca invente ou estime):
+- "imovel": identificação curta do imóvel (string)
+- "endereco": endereço completo do imóvel (string)
+- "tipo": exatamente "Residencial" ou "Comercial"
+- "matricula": número da matrícula do imóvel (string)
+- "iptu": número de inscrição do IPTU (string)
+- "locador": nome completo do locador/proprietário (string)
+- "locadorDoc": CPF ou CNPJ do locador (string)
+- "locatario": nome completo do locatário/inquilino (string)
+- "locatarioDoc": CPF ou CNPJ do locatário (string)
+- "aluguel": valor mensal, só dígitos e ponto decimal, ex "3100.00" (string, sem "R$" e sem separador de milhar)
+- "indice": exatamente "IGP-M", "IPCA" ou "Índice fixo"
+- "inicio": data de início da vigência no formato yyyy-mm-dd (string)
+- "fim": data de fim da vigência no formato yyyy-mm-dd (string)
+- "vencimentoDia": dia do mês do vencimento, só dígitos, ex "5" (string)
+- "garantia": exatamente "Caução", "Fiador", "Seguro-fiança" ou "Título de capitalização"
+Não inclua nenhuma outra chave. Não escreva texto fora do JSON.`;
 
 let clientSingleton: OpenAI | null = null;
 function getClient(): OpenAI {
-  if (!clientSingleton) clientSingleton = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  if (!clientSingleton) {
+    clientSingleton = new OpenAI({
+      apiKey: process.env.OLLAMA_API_KEY,
+      baseURL: OLLAMA_BASE_URL,
+    });
+  }
   return clientSingleton;
 }
 
@@ -79,37 +108,41 @@ export async function extrairContratoDoPdf(args: {
   buffer: Buffer;
   filename: string;
 }): Promise<ExtrairContratoResultado> {
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.OLLAMA_API_KEY) {
     return { ok: false, message: MENSAGEM_INDISPONIVEL };
   }
 
+  // 1. Extrai a camada de texto do PDF localmente (Ollama não ingere PDF cru).
+  let texto: string;
   try {
-    const response = await getClient().responses.create({
-      model: process.env.OPENAI_MODEL || "gpt-4o",
-      input: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "input_file",
-              filename: args.filename,
-              file_data: `data:application/pdf;base64,${args.buffer.toString("base64")}`,
-            },
-            { type: "input_text", text: PROMPT },
-          ],
-        },
+    texto = await extrairTextoDoPdf(args.buffer);
+  } catch (err) {
+    console.error("Falha ao ler o texto do PDF:", err);
+    return { ok: false, message: MENSAGEM_FALHA };
+  }
+
+  if (!texto.trim()) {
+    return { ok: false, message: MENSAGEM_SEM_TEXTO };
+  }
+
+  // 2. Manda o texto ao modelo pedindo saída estruturada conforme o schema.
+  try {
+    const response = await getClient().chat.completions.create({
+      model: process.env.OLLAMA_MODEL || MODELO_PADRAO,
+      messages: [
+        { role: "system", content: PROMPT },
+        { role: "user", content: `Contrato:\n\n${texto}` },
       ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "contrato_extraido",
-          schema: SCHEMA,
-          strict: true,
-        },
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "contrato_extraido", schema: SCHEMA, strict: true },
       },
     });
 
-    const dados = JSON.parse(response.output_text) as CampoContratoIA;
+    const conteudo = response.choices[0]?.message?.content;
+    if (!conteudo) return { ok: false, message: MENSAGEM_FALHA };
+
+    const dados = JSON.parse(conteudo) as CampoContratoIA;
     return { ok: true, dados };
   } catch (err) {
     console.error("Falha ao extrair contrato via IA:", err);
