@@ -15,6 +15,31 @@ function proximaRef(refs: string[]): string {
   return `LOC-${String(max + 1).padStart(4, "0")}`;
 }
 
+const MAX_TENTATIVAS_REF = 5;
+
+/**
+ * Calcula o próximo ref e insere o contrato, tentando de novo se colidir com
+ * um ref criado por outra requisição entre o SELECT e o INSERT (ref tem
+ * unique constraint no banco — 23505 é o código de unique_violation do Postgres).
+ */
+async function inserirContratoComRefUnica(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  montarInsert: (ref: string) => Record<string, unknown>,
+): Promise<{ ref: string; id: string }> {
+  for (let tentativa = 0; tentativa < MAX_TENTATIVAS_REF; tentativa++) {
+    const { data: existentes } = await supabase.from("contratos").select("ref");
+    const ref = proximaRef(((existentes as { ref: string }[] | null) ?? []).map((r) => r.ref));
+
+    const { data, error } = await supabase.from("contratos").insert(montarInsert(ref)).select("id").single();
+
+    if (!error && data) return { ref, id: (data as { id: string }).id };
+    if (error?.code !== "23505") throw new Error(error?.message ?? "Falha ao criar contrato.");
+    // colisão de ref: outra criação simultânea já usou esse número — recalcula e tenta de novo.
+  }
+
+  throw new Error("Não foi possível gerar uma referência única para o contrato. Tente novamente.");
+}
+
 function valorNumerico(raw: string): number {
   // Remove tudo exceto dígitos e vírgula (separador decimal no BR).
   // "R$ 3.100,00" → "3100,00" → "3100" → 3100
@@ -43,8 +68,6 @@ export async function criarContrato(formData: FormData) {
   }
 
   const supabase = await createClient();
-  const { data: existentes } = await supabase.from("contratos").select("ref");
-  const ref = proximaRef(((existentes as { ref: string }[] | null) ?? []).map((r) => r.ref));
 
   const get = (k: string) => String(formData.get(k) ?? "").trim();
   const imovel = get("imovel") || get("endereco") || "";
@@ -55,37 +78,31 @@ export async function criarContrato(formData: FormData) {
   if (!get("locador")) throw new Error("Nome do locador é obrigatório.");
   if (!get("locatario")) throw new Error("Nome do locatário é obrigatório.");
 
-  // Insere o contrato e recupera o UUID para vincular os documentos.
-  const { data: novoContrato, error: insertErr } = await supabase
-    .from("contratos")
-    .insert({
-      ref,
-      tipo: get("tipo") || "Residencial",
-      imovel,
-      endereco: get("endereco") || null,
-      matricula: get("matricula") || null,
-      iptu: get("iptu") || null,
-      locador: get("locador") || null,
-      locador_doc: get("locadorDoc") || null,
-      locatario: get("locatario") || null,
-      locatario_doc: get("locatarioDoc") || null,
-      aluguel: valorNumerico(get("aluguel")),
-      indice: get("indice") || "IGP-M",
-      vencimento_dia: get("vencimentoDia") ? Number(get("vencimentoDia").replace(/\D/g, "")) : null,
-      inicio: get("inicio") || null,
-      fim: get("fim") || null,
-      garantia: get("garantia") || null,
-    })
-    .select("id")
-    .single();
-
-  if (insertErr || !novoContrato) {
-    throw new Error(insertErr?.message ?? "Falha ao criar contrato.");
-  }
+  // Insere o contrato (com retry em caso de colisão de ref) e recupera o UUID
+  // pra vincular os documentos.
+  const { ref, id: novoContratoId } = await inserirContratoComRefUnica(supabase, (ref) => ({
+    ref,
+    tipo: get("tipo") || "Residencial",
+    imovel,
+    endereco: get("endereco") || null,
+    matricula: get("matricula") || null,
+    iptu: get("iptu") || null,
+    locador: get("locador") || null,
+    locador_doc: get("locadorDoc") || null,
+    locatario: get("locatario") || null,
+    locatario_doc: get("locatarioDoc") || null,
+    aluguel: valorNumerico(get("aluguel")),
+    indice: get("indice") || "IGP-M",
+    vencimento_dia: get("vencimentoDia") ? Number(get("vencimentoDia").replace(/\D/g, "")) : null,
+    inicio: get("inicio") || null,
+    fim: get("fim") || null,
+    garantia: get("garantia") || null,
+  }));
 
   // Faz upload dos documentos anexados.
   const arquivos = formData.getAll("documentos") as File[];
   const validos = arquivos.filter((f) => f instanceof File && f.size > 0);
+  const falhas: string[] = [];
 
   if (validos.length > 0) {
     const admin = createAdminClient();
@@ -102,19 +119,23 @@ export async function criarContrato(formData: FormData) {
         .upload(storagePath, bytes, { contentType: arquivo.type || "application/octet-stream" });
 
       if (!upErr) {
-        await admin.from("documentos").insert({
-          contrato_id: novoContrato.id,
+        const { error: insertDocErr } = await admin.from("documentos").insert({
+          contrato_id: novoContratoId,
           nome,
           storage_path: storagePath,
         });
+        if (insertDocErr) falhas.push(nome);
+      } else {
+        falhas.push(nome);
       }
-      // Falha silenciosa por arquivo individual — o contrato já foi criado.
+      // Falha por arquivo individual não interrompe os demais — o contrato já foi criado,
+      // mas o admin precisa saber quais anexos não subiram (ver redirect abaixo).
     }
   }
 
   revalidatePath("/carteira");
   revalidatePath("/painel");
-  redirect("/carteira");
+  redirect(falhas.length > 0 ? `/carteira?falhaUpload=${encodeURIComponent(falhas.join(", "))}` : "/carteira");
 }
 
 /** Extrai os dados de um contrato a partir do PDF assinado, via IA, para pré-preencher o formulário. */

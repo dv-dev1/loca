@@ -15,15 +15,21 @@ const FILTROS: { label: string; valor: Tipo | "Todos" }[] = [
 export default async function CarteiraPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tipo?: string }>;
+  searchParams: Promise<{ tipo?: string; falhaUpload?: string }>;
 }) {
-  const { tipo } = await searchParams;
+  const { tipo, falhaUpload } = await searchParams;
   const todos = await getContratos();
   const filtro: Tipo | "Todos" = tipo === "Residencial" || tipo === "Comercial" ? tipo : "Todos";
   const contratos = filtro === "Todos" ? todos : todos.filter((c) => c.tipo === filtro);
 
   return (
     <div className="flex flex-col gap-8">
+      {falhaUpload && (
+        <div className="border border-danger/40 bg-danger/5 px-4 py-3 text-sm text-danger">
+          Contrato salvo, mas os seguintes anexos não foram enviados: <strong>{falhaUpload}</strong>. O sistema ainda não tem uma tela para reanexar documentos depois do cadastro — peça ao suporte técnico para subir esses arquivos direto no Supabase.
+        </div>
+      )}
+
       {/* filtros */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-ink/80 pb-4">
         <div className="flex items-center gap-5 font-mono text-[0.72rem] uppercase tracking-[0.12em]">
