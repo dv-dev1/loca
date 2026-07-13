@@ -1,7 +1,7 @@
 // Mapeia dados reais do banco para o shape de exibição `Contrato`,
 // derivando evento/data/tom/régua das datas. Puro — sem Supabase/React.
 
-import { type Contrato, type Tom, brl } from "@/app/_data/contratos";
+import { type Contrato, type Tom, brl } from "./contrato";
 import { type Severidade, alertasDoContrato } from "./alertas";
 import { formatDataHora, formatMesAno, periodicidadeMeses, proximoReajuste } from "./datas";
 

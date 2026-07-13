@@ -1,37 +1,11 @@
-export type Tipo = "Residencial" | "Comercial";
-export type Tom = "ok" | "atencao" | "perigo";
+import type { Anotacao, Contrato, Reajuste, Tipo, Tom } from "@/lib/domain/contrato";
+import { brl } from "@/lib/domain/contrato";
 
-export type Reajuste = { data: string; indice: string; de: string; para: string };
-export type Anotacao = { id: string; texto: string; criadoEm: string };
-
-export type Contrato = {
-  ref: string;
-  tipo: Tipo;
-  imovel: string;
-  endereco: string;
-  matricula: string;
-  iptu: string;
-  locador: string;
-  locadorDoc: string;
-  locatario: string;
-  locatarioDoc: string;
-  aluguel: string;
-  indice: string;
-  periodicidade: string;
-  vencimentoDia: string;
-  inicio: string;
-  fim: string;
-  garantia: string;
-  /** próximo evento (lista) */
-  evento: "vence" | "reajuste";
-  data: string;
-  tom: Tom;
-  /** régua do tempo */
-  regua: { inicio: string; reajuste: string; reajusteLabel: string; fim: string; pct: number };
-  documentos: string[];
-  reajustes: Reajuste[];
-  anotacoes: Anotacao[];
-};
+// Re-exportados por compatibilidade: o resto de app/ e lib/pdf/ importam
+// tipos e o formatador brl() a partir deste módulo. A fonte de verdade dos
+// dois é lib/domain/contrato.ts — ver comentário lá.
+export type { Anotacao, Contrato, Reajuste, Tipo, Tom };
+export { brl };
 
 export const CONTRATOS: Contrato[] = [
   {
@@ -226,10 +200,6 @@ export const CONTRATOS: Contrato[] = [
 
 export function getContrato(ref: string): Contrato | undefined {
   return CONTRATOS.find((c) => c.ref.toLowerCase() === ref.toLowerCase());
-}
-
-export function brl(n: number): string {
-  return "R$ " + n.toLocaleString("pt-BR");
 }
 
 /** Reajustes previstos e ainda não aplicados (dinheiro escapando todo mês). */

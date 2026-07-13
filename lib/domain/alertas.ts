@@ -1,7 +1,7 @@
 // Domínio puro de alertas — sem dependências de framework/Supabase.
 // Regra de antecedência (em meses) por tipo de contrato e evento.
 
-import type { Contrato, Tipo } from "@/app/_data/contratos";
+import type { Contrato, Tipo } from "./contrato";
 import { mesesEntre, parseMesAno, periodicidadeMeses, proximoReajuste } from "./datas";
 
 export type TipoAlerta = "reajuste" | "vencimento";

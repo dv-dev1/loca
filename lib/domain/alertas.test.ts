@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Contrato } from "@/app/_data/contratos";
+import type { Contrato } from "./contrato";
 import { alertasDaCarteira, alertasDoContrato } from "./alertas";
 
 const BASE: Contrato = {
