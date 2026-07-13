@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatDataHora,
   formatMesAno,
   mesesEntre,
   parseMesAno,
@@ -63,6 +64,16 @@ describe("proximoReajuste", () => {
   it("nunca retorna o próprio início (primeiro reajuste é após um período)", () => {
     const d = proximoReajuste(inicio, 12, new Date(2024, 5, 1));
     expect(d.getFullYear()).toBe(2025);
+  });
+});
+
+describe("formatDataHora", () => {
+  it("formata data e hora como dd/mm/aaaa HH:mm", () => {
+    expect(formatDataHora(new Date(2026, 6, 13, 9, 5))).toBe("13/07/2026 09:05");
+  });
+
+  it("preenche com zero à esquerda dia, mês, hora e minuto", () => {
+    expect(formatDataHora(new Date(2026, 0, 2, 3, 4))).toBe("02/01/2026 03:04");
   });
 });
 

@@ -21,6 +21,7 @@ const BASE: ContratoInput = {
   garantia: "Caução",
   reajustes: [],
   documentos: [],
+  anotacoes: [],
 };
 
 function input(p: Partial<ContratoInput>): ContratoInput {
@@ -63,5 +64,21 @@ describe("toContrato", () => {
     const c = toContrato(input({ fim: new Date(2026, 0, 1) }), new Date(2024, 0, 1));
     expect(c.regua.pct).toBeGreaterThanOrEqual(45);
     expect(c.regua.pct).toBeLessThanOrEqual(55);
+  });
+
+  it("mapeia anotações formatando data/hora, mais recente primeiro", () => {
+    const c = toContrato(
+      input({
+        anotacoes: [
+          { id: "1", texto: "primeira", criadoEm: new Date(2026, 6, 10, 9, 0) },
+          { id: "2", texto: "segunda", criadoEm: new Date(2026, 6, 12, 14, 30) },
+        ],
+      }),
+      new Date(2025, 5, 1),
+    );
+    expect(c.anotacoes).toEqual([
+      { id: "2", texto: "segunda", criadoEm: "12/07/2026 14:30" },
+      { id: "1", texto: "primeira", criadoEm: "10/07/2026 09:00" },
+    ]);
   });
 });

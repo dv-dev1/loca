@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, supabaseConfigured } from "@/lib/supabase/client";
 
 function Field({
   label,
@@ -45,6 +45,13 @@ export function LoginForm() {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    // Supabase ainda não configurado → modo demo: entra direto, sem checar credenciais.
+    if (!supabaseConfigured) {
+      setLoading(false);
+      router.push("/painel");
+      return;
+    }
 
     const supabase = createClient();
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });

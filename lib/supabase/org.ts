@@ -1,3 +1,4 @@
+import { supabaseConfigured } from "./client";
 import { createClient } from "./server";
 
 export type OrgSettings = { nome: string; whatsapp: string | null; email: string | null };
@@ -6,6 +7,8 @@ const PADRAO: OrgSettings = { nome: "Imobiliária", whatsapp: null, email: null 
 
 /** Configurações da imobiliária (single-tenant: linha id=1). */
 export async function getOrgSettings(): Promise<OrgSettings> {
+  if (!supabaseConfigured) return PADRAO;
+
   const supabase = await createClient();
   const { data } = await supabase
     .from("org_settings")

@@ -1,21 +1,31 @@
+import { CONTRATOS } from "@/app/_data/contratos";
+import { supabaseConfigured } from "@/lib/supabase/client";
 import { createClient } from "@/lib/supabase/server";
 import { ConvidarForm, type ContratoOpcao } from "./ConvidarForm";
 
 type Row = { ref: string; imovel: string; tipo: string; locador_user_id: string | null };
 
-export default async function LocadoresPage() {
+async function carregarContratos(): Promise<ContratoOpcao[]> {
+  if (!supabaseConfigured) {
+    return CONTRATOS.map((c) => ({ ref: c.ref, imovel: c.imovel, tipo: c.tipo, vinculado: false }));
+  }
+
   const supabase = await createClient();
   const { data } = await supabase
     .from("contratos")
     .select("ref, imovel, tipo, locador_user_id")
     .order("imovel");
 
-  const contratos: ContratoOpcao[] = ((data as Row[] | null) ?? []).map((c) => ({
+  return ((data as Row[] | null) ?? []).map((c) => ({
     ref: c.ref,
     imovel: c.imovel,
     tipo: c.tipo,
     vinculado: c.locador_user_id != null,
   }));
+}
+
+export default async function LocadoresPage() {
+  const contratos = await carregarContratos();
 
   return (
     <div className="max-w-2xl">

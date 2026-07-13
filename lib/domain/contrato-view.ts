@@ -3,12 +3,13 @@
 
 import { type Contrato, type Tom, brl } from "@/app/_data/contratos";
 import { type Severidade, alertasDoContrato } from "./alertas";
-import { formatMesAno, periodicidadeMeses, proximoReajuste } from "./datas";
+import { formatDataHora, formatMesAno, periodicidadeMeses, proximoReajuste } from "./datas";
 
 const MES3 = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 const SEV_TOM: Record<Severidade, Tom> = { perigo: "perigo", atencao: "atencao", info: "ok" };
 
 export type ReajusteInput = { data: Date; indice: string; de: number; para: number };
+export type AnotacaoInput = { id: string; texto: string; criadoEm: Date };
 
 export type ContratoInput = {
   ref: string;
@@ -30,6 +31,7 @@ export type ContratoInput = {
   garantia: string;
   reajustes: ReajusteInput[];
   documentos: string[];
+  anotacoes: AnotacaoInput[];
 };
 
 function curto(d: Date): string {
@@ -80,6 +82,9 @@ export function toContrato(i: ContratoInput, hoje: Date): Contrato {
       de: brl(r.de),
       para: brl(r.para),
     })),
+    anotacoes: [...i.anotacoes]
+      .sort((a, b) => b.criadoEm.getTime() - a.criadoEm.getTime())
+      .map((a) => ({ id: a.id, texto: a.texto, criadoEm: formatDataHora(a.criadoEm) })),
   };
 
   // Próximo evento: usa o alerta mais urgente (se houver) ou o próximo cronológico.

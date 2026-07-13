@@ -11,6 +11,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({ auth: { signInWithPassword } }),
+  supabaseConfigured: true,
 }));
 
 import { LoginForm } from "./LoginForm";
@@ -50,5 +51,25 @@ describe("LoginForm", () => {
 
     expect(await screen.findByText(/e-mail ou senha inválidos/i)).toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
+  });
+
+  it("em modo demo, entra direto no painel sem chamar o Supabase", async () => {
+    vi.resetModules();
+    vi.doMock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+    vi.doMock("@/lib/supabase/client", () => ({
+      createClient: () => ({ auth: { signInWithPassword } }),
+      supabaseConfigured: false,
+    }));
+
+    const { LoginForm: LoginFormDemo } = await import("./LoginForm");
+    const user = userEvent.setup();
+    render(<LoginFormDemo />);
+
+    await user.click(screen.getByRole("button", { name: /entrar no painel/i }));
+
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith("/painel");
+    });
+    expect(signInWithPassword).not.toHaveBeenCalled();
   });
 });

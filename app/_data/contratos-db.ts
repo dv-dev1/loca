@@ -1,10 +1,12 @@
 import { type ContratoInput, type ReajusteInput, toContrato } from "@/lib/domain/contrato-view";
 import { mesesEntre, periodicidadeMeses, proximoReajuste } from "@/lib/domain/datas";
+import { supabaseConfigured } from "@/lib/supabase/client";
 import { createClient } from "@/lib/supabase/server";
-import type { Achado, Contrato } from "./contratos";
+import { type Achado, type Contrato, CONTRATOS, diagnostico, getContrato } from "./contratos";
 
 type ReajusteRow = { data: string; indice: string; valor_anterior: number; valor_novo: number };
 type DocRow = { nome: string };
+type AnotacaoRow = { id: string; texto: string; created_at: string };
 type ContratoRow = {
   ref: string;
   tipo: Contrato["tipo"];
@@ -25,8 +27,11 @@ type ContratoRow = {
   garantia: string | null;
   reajustes: ReajusteRow[] | null;
   documentos: DocRow[] | null;
+  anotacoes: AnotacaoRow[] | null;
 };
 
+// TODO: acrescentar ", anotacoes(id, texto, created_at)" assim que
+// supabase/03_anotacoes.sql for rodado no projeto Supabase real.
 const SELECT = "*, reajustes(data, indice, valor_anterior, valor_novo), documentos(nome)";
 
 /** 'YYYY-MM-DD' → Date local (sem deslocar fuso). */
@@ -60,6 +65,8 @@ function rowToInput(row: ContratoRow): ContratoInput {
     garantia: row.garantia ?? "—",
     reajustes,
     documentos: (row.documentos ?? []).map((d) => d.nome),
+    // TODO: mapear de row.anotacoes assim que a coluna estiver sendo buscada (ver SELECT acima).
+    anotacoes: (row.anotacoes ?? []).map((a) => ({ id: a.id, texto: a.texto, criadoEm: new Date(a.created_at) })),
   };
 }
 
@@ -70,11 +77,13 @@ async function loadInputs(): Promise<ContratoInput[]> {
 }
 
 export async function getContratos(): Promise<Contrato[]> {
+  if (!supabaseConfigured) return CONTRATOS;
   const hoje = new Date();
   return (await loadInputs()).map((i) => toContrato(i, hoje));
 }
 
 export async function getContratoByRef(ref: string): Promise<Contrato | undefined> {
+  if (!supabaseConfigured) return getContrato(ref);
   const supabase = await createClient();
   const { data } = await supabase.from("contratos").select(SELECT).ilike("ref", ref).maybeSingle();
   if (!data) return undefined;
@@ -83,6 +92,7 @@ export async function getContratoByRef(ref: string): Promise<Contrato | undefine
 
 /** Raio-X derivado de dados reais. Perda mensal é uma estimativa (índice médio anual). */
 export async function getDiagnosticoDb() {
+  if (!supabaseConfigured) return diagnostico();
   const hoje = new Date();
   const inputs = await loadInputs();
   const ESTIMATIVA_ANUAL = 0.045; // ~4,5% a.a. quando não há índice apurado registrado

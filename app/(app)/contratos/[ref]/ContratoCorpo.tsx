@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { Contrato } from "@/app/_data/contratos";
+import { Anotacoes } from "./Anotacoes";
 import { apagarContrato } from "./actions";
 
 type CampoKey =
@@ -20,7 +21,7 @@ type CampoKey =
   | "vencimentoDia"
   | "garantia";
 
-function SectionTitle({ n, title }: { n: string; title: string }) {
+export function SectionTitle({ n, title }: { n: string; title: string }) {
   return (
     <div className="mb-2 flex items-baseline gap-3">
       <span className="font-mono text-sm text-accent-2">{n}</span>
@@ -88,8 +89,7 @@ export function ContratoCorpo({ contrato }: { contrato: Contrato }) {
     setEditing(false);
   }
 
-  function save(e: React.FormEvent) {
-    e.preventDefault();
+  function save() {
     setSaved(draft);
     setEditing(false);
   }
@@ -101,7 +101,7 @@ export function ContratoCorpo({ contrato }: { contrato: Contrato }) {
   const c = editing ? draft : saved;
 
   return (
-    <form className="mt-12 grid gap-12 lg:grid-cols-[1.3fr_1fr]" onSubmit={save}>
+    <div className="mt-12 grid gap-12 lg:grid-cols-[1.3fr_1fr]">
       <div className="flex flex-col gap-10">
         <section>
           <SectionTitle n="01" title="Imóvel" />
@@ -214,7 +214,7 @@ export function ContratoCorpo({ contrato }: { contrato: Contrato }) {
         <div className="flex flex-col gap-3">
           {editing ? (
             <>
-              <button type="submit" className="inline-flex h-12 items-center justify-center rounded-sm bg-brand font-semibold text-paper transition hover:bg-brand-2">
+              <button type="button" onClick={save} className="inline-flex h-12 items-center justify-center rounded-sm bg-brand font-semibold text-paper transition hover:bg-brand-2">
                 Salvar
               </button>
               <button type="button" onClick={cancel} className="inline-flex h-12 items-center justify-center rounded-sm border border-ink/25 font-semibold transition hover:border-ink">
@@ -274,7 +274,9 @@ export function ContratoCorpo({ contrato }: { contrato: Contrato }) {
               </button>
             ))}
         </div>
+
+        <Anotacoes contratoRef={contrato.ref} anotacoesIniciais={contrato.anotacoes} />
       </div>
-    </form>
+    </div>
   );
 }

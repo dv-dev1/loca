@@ -26,6 +26,7 @@ const BASE: Contrato = {
   regua: { inicio: "jan/24", reajuste: "jan/25", reajusteLabel: "—", fim: "jan/30", pct: 50 },
   documentos: [],
   reajustes: [],
+  anotacoes: [],
 };
 
 function contrato(p: Partial<Contrato>): Contrato {

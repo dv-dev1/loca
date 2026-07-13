@@ -2,6 +2,7 @@ export type Tipo = "Residencial" | "Comercial";
 export type Tom = "ok" | "atencao" | "perigo";
 
 export type Reajuste = { data: string; indice: string; de: string; para: string };
+export type Anotacao = { id: string; texto: string; criadoEm: string };
 
 export type Contrato = {
   ref: string;
@@ -29,11 +30,13 @@ export type Contrato = {
   regua: { inicio: string; reajuste: string; reajusteLabel: string; fim: string; pct: number };
   documentos: string[];
   reajustes: Reajuste[];
+  anotacoes: Anotacao[];
 };
 
 export const CONTRATOS: Contrato[] = [
   {
     ref: "LOC-0388",
+    anotacoes: [],
     tipo: "Residencial",
     imovel: "Casa · R. das Acácias, 120",
     endereco: "R. das Acácias, 120 — Jardim Sul",
@@ -59,6 +62,7 @@ export const CONTRATOS: Contrato[] = [
   },
   {
     ref: "LOC-0429",
+    anotacoes: [],
     tipo: "Residencial",
     imovel: "Apto 302 · Ed. Aurora",
     endereco: "Av. Beira-Rio, 880, ap. 302 — Centro",
@@ -84,6 +88,7 @@ export const CONTRATOS: Contrato[] = [
   },
   {
     ref: "LOC-0411",
+    anotacoes: [],
     tipo: "Comercial",
     imovel: "Sala 14 · Empresarial Norte",
     endereco: "R. do Comércio, 45, sala 14 — Norte",
@@ -112,6 +117,7 @@ export const CONTRATOS: Contrato[] = [
   },
   {
     ref: "LOC-0356",
+    anotacoes: [],
     tipo: "Comercial",
     imovel: "Loja 3 · Galeria Sul",
     endereco: "Galeria Sul, loja 3 — Centro",
@@ -137,6 +143,7 @@ export const CONTRATOS: Contrato[] = [
   },
   {
     ref: "LOC-0341",
+    anotacoes: [],
     tipo: "Residencial",
     imovel: "Apto 71 · Ed. Cedro",
     endereco: "R. dos Pinhais, 200, ap. 71 — Leste",
@@ -162,6 +169,7 @@ export const CONTRATOS: Contrato[] = [
   },
   {
     ref: "LOC-0312",
+    anotacoes: [],
     tipo: "Residencial",
     imovel: "Casa · Al. dos Ipês, 45",
     endereco: "Al. dos Ipês, 45 — Jardim Botânico",
@@ -187,6 +195,7 @@ export const CONTRATOS: Contrato[] = [
   },
   {
     ref: "LOC-0298",
+    anotacoes: [],
     tipo: "Comercial",
     imovel: "Conj. 9 · Torre Marília",
     endereco: "Av. das Torres, 1500, conj. 9 — Norte",

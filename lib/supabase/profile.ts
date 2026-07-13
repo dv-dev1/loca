@@ -1,3 +1,4 @@
+import { supabaseConfigured } from "./client";
 import { createClient } from "./server";
 
 export type Papel = "admin" | "locador";
@@ -5,6 +6,11 @@ export type Profile = { id: string; papel: Papel; nome: string | null };
 
 /** Perfil (papel) do usuário autenticado, ou null se não houver sessão. */
 export async function getProfile(): Promise<Profile | null> {
+  // Supabase ainda não configurado → modo demo: trata o visitante como admin, sem rede.
+  if (!supabaseConfigured) {
+    return { id: "demo", papel: "admin", nome: "Imobiliária Demo" };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },

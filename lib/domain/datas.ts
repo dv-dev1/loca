@@ -34,6 +34,15 @@ export function proximoReajuste(inicio: Date, meses: number, hoje: Date): Date {
   return d;
 }
 
+/** Date -> "dd/mm/aaaa HH:mm" (horário local). */
+export function formatDataHora(d: Date): string {
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${dd}/${mm}/${d.getFullYear()} ${hh}:${min}`;
+}
+
 /** Meses cheios de `de` até `ate` (negativo se `ate` já passou). */
 export function mesesEntre(de: Date, ate: Date): number {
   let meses = (ate.getFullYear() - de.getFullYear()) * 12 + (ate.getMonth() - de.getMonth());
