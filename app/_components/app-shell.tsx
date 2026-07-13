@@ -4,15 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-const NAV = [
-  { href: "/painel", label: "Painel", meta: "Visão da carteira" },
-  { href: "/carteira", label: "Carteira", meta: "Contratos vigentes" },
-  { href: "/alertas", label: "Alertas", meta: "Reajustes e vencimentos" },
-  { href: "/diagnostico", label: "Diagnóstico", meta: "Raio-X da carteira" },
-  { href: "/contratos/novo", label: "Novo contrato", meta: "Cadastrar" },
-  { href: "/contratos/importar", label: "Importar", meta: "Da planilha" },
-  { href: "/locadores", label: "Locadores", meta: "Acessos do cliente" },
-  { href: "/configuracoes", label: "Configurações", meta: "Dados da imobiliária" },
+const NAV_OPERACAO = [
+  { href: "/painel", label: "Painel" },
+  { href: "/contratos/novo", label: "Novo contrato", destaque: true },
+  { href: "/carteira", label: "Carteira" },
+  { href: "/alertas", label: "Alertas" },
+  { href: "/contratos/importar", label: "Importar" },
+  { href: "/locadores", label: "Locadores" },
+];
+
+const NAV_GESTAO = [
+  { href: "/diagnostico", label: "Diagnóstico" },
+  { href: "/configuracoes", label: "Configurações" },
 ];
 
 function SinoAlertas({ count }: { count: number }) {
@@ -59,28 +62,63 @@ export function AppShell({ children, alertasCount = 0 }: { children: ReactNode; 
           Locá<span className="text-accent">.</span>
         </Link>
 
-        <nav className="mt-10 flex flex-1 flex-col gap-1" aria-label="Navegação">
-          {NAV.map((item) => {
-            const active = pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={active ? "page" : undefined}
-                className={`relative rounded-sm px-3 py-2.5 transition ${
-                  active ? "bg-paper" : "hover:bg-paper/60"
-                }`}
-              >
-                {active && <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 bg-accent" />}
-                <span className={`block text-sm font-semibold ${active ? "text-brand" : "text-ink"}`}>
-                  {item.label}
-                </span>
-                <span className="block font-mono text-[0.66rem] uppercase tracking-[0.1em] text-ink-faint">
-                  {item.meta}
-                </span>
-              </Link>
-            );
-          })}
+        <nav className="mt-10 flex flex-1 flex-col gap-6" aria-label="Navegação">
+          <div className="flex flex-col gap-1">
+            <p className="px-3 pb-1 font-mono text-[0.66rem] uppercase tracking-[0.18em] text-ink-faint">
+              § Operação
+            </p>
+            {NAV_OPERACAO.map((item) => {
+              const active = pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={`relative flex items-center justify-between rounded-sm px-3 py-2 transition ${
+                    active ? "bg-paper" : "hover:bg-paper/60"
+                  }`}
+                >
+                  {active && <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 bg-accent" />}
+                  <span
+                    className={`text-sm font-semibold ${
+                      active ? "text-brand" : item.destaque ? "text-accent" : "text-ink"
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                  {item.href === "/alertas" && alertasCount > 0 && (
+                    <span className="flex min-w-[1.1rem] items-center justify-center rounded-full bg-danger px-1 font-mono text-[0.62rem] font-bold leading-[1.1rem] text-paper">
+                      {alertasCount}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <p className="px-3 pb-1 font-mono text-[0.66rem] uppercase tracking-[0.18em] text-ink-faint">
+              § Gestão
+            </p>
+            {NAV_GESTAO.map((item) => {
+              const active = pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={`relative rounded-sm px-3 py-2 transition ${
+                    active ? "bg-paper" : "hover:bg-paper/60"
+                  }`}
+                >
+                  {active && <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 bg-accent" />}
+                  <span className={`text-sm font-semibold ${active ? "text-brand" : "text-ink"}`}>
+                    {item.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
         </nav>
 
         <div className="border-t border-line pt-4">
