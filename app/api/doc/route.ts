@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getProfile } from "@/lib/supabase/profile";
 
 export async function GET(req: NextRequest) {
   const ref = req.nextUrl.searchParams.get("ref");
@@ -15,21 +16,28 @@ export async function GET(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.redirect(new URL("/login", req.url));
 
+  const profile = await getProfile();
   const admin = createAdminClient();
 
-  // Localiza o contrato pelo ref.
+  // Localiza o contrato pelo ref. O admin client ignora RLS de propósito (só ele
+  // consegue gerar signed URL de storage), então a checagem de dono precisa ser
+  // refeita aqui manualmente: admin vê tudo, locador só os contratos vinculados a ele.
   const { data: contrato } = await admin
     .from("contratos")
-    .select("id")
+    .select("id, locador_user_id")
     .eq("ref", ref)
     .maybeSingle();
 
-  if (contrato) {
+  const contratoTyped = contrato as { id: string; locador_user_id: string | null } | null;
+  const autorizado =
+    !!contratoTyped && (profile?.papel === "admin" || contratoTyped.locador_user_id === user.id);
+
+  if (autorizado) {
     // Busca o storage_path do documento.
     const { data: doc } = await admin
       .from("documentos")
       .select("storage_path")
-      .eq("contrato_id", (contrato as { id: string }).id)
+      .eq("contrato_id", contratoTyped.id)
       .eq("nome", nome)
       .maybeSingle();
 
