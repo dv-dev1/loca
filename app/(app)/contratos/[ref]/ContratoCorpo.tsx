@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import type { Contrato } from "@/app/_data/contratos";
+import { apagarContrato } from "./actions";
 
 type CampoKey =
   | "endereco"
@@ -58,9 +60,24 @@ function EditField({
 }
 
 export function ContratoCorpo({ contrato }: { contrato: Contrato }) {
+  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(contrato);
   const [draft, setDraft] = useState(contrato);
+  const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
+  const [erroExclusao, setErroExclusao] = useState<string | null>(null);
+  const [apagando, startApagar] = useTransition();
+
+  function apagar() {
+    startApagar(async () => {
+      const resultado = await apagarContrato(contrato.ref);
+      if (!resultado.ok) {
+        setErroExclusao(resultado.message ?? "Não foi possível apagar o contrato.");
+        return;
+      }
+      router.push("/carteira");
+    });
+  }
 
   function startEdit() {
     setDraft(saved);
@@ -216,6 +233,46 @@ export function ContratoCorpo({ contrato }: { contrato: Contrato }) {
           >
             Baixar contrato (PDF)
           </a>
+
+          {!editing &&
+            (confirmandoExclusao ? (
+              <div className="flex flex-col gap-3 rounded-sm border border-danger/40 bg-danger/5 p-4">
+                <p className="text-sm text-danger">
+                  Apagar remove também o histórico de reajustes e os documentos vinculados. Essa ação não pode ser
+                  desfeita.
+                </p>
+                {erroExclusao && <p className="text-sm font-semibold text-danger">{erroExclusao}</p>}
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={apagar}
+                    disabled={apagando}
+                    className="inline-flex h-11 flex-1 items-center justify-center rounded-sm bg-danger font-semibold text-paper transition hover:bg-danger/90 disabled:opacity-60"
+                  >
+                    {apagando ? "Apagando…" : "Confirmar exclusão"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setConfirmandoExclusao(false);
+                      setErroExclusao(null);
+                    }}
+                    disabled={apagando}
+                    className="inline-flex h-11 flex-1 items-center justify-center rounded-sm border border-ink/25 font-semibold transition hover:border-ink disabled:opacity-60"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmandoExclusao(true)}
+                className="inline-flex h-12 items-center justify-center rounded-sm border border-danger/40 font-semibold text-danger transition hover:bg-danger/5"
+              >
+                Apagar contrato
+              </button>
+            ))}
         </div>
       </div>
     </form>
