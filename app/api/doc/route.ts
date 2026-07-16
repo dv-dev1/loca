@@ -19,14 +19,22 @@ export async function GET(req: NextRequest) {
   const profile = await getProfile();
   const admin = createAdminClient();
 
-  // Localiza o contrato pelo ref. O admin client ignora RLS de propósito (só ele
-  // consegue gerar signed URL de storage), então a checagem de dono precisa ser
-  // refeita aqui manualmente: admin vê tudo, locador só os contratos vinculados a ele.
-  const { data: contrato } = await admin
-    .from("contratos")
-    .select("id, locador_user_id")
-    .eq("ref", ref)
-    .maybeSingle();
+  // Localiza o contrato pelo ref, dentro da org de quem pede. O admin client
+  // ignora RLS de propósito (só ele gera signed URL de storage), então tanto o
+  // escopo de org quanto a checagem de dono são refeitos aqui à mão.
+  //
+  // O filtro por org_id não é redundante com a checagem de papel abaixo: refs
+  // são únicos por org (04_multi_tenant.sql), então LOC-0001 existe em várias
+  // imobiliárias — sem ele, o ref buscado seria ambíguo e um admin da Projecta
+  // baixaria o documento da Jampa apenas conhecendo o número.
+  const { data: contrato } = profile?.orgId
+    ? await admin
+        .from("contratos")
+        .select("id, locador_user_id")
+        .eq("ref", ref)
+        .eq("org_id", profile.orgId)
+        .maybeSingle()
+    : { data: null };
 
   const contratoTyped = contrato as { id: string; locador_user_id: string | null } | null;
   const autorizado =

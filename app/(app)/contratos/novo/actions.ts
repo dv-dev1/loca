@@ -6,6 +6,24 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProfile } from "@/lib/supabase/profile";
 import { type ExtrairContratoResultado, extrairContratoDoPdf } from "@/lib/ia/extrair-contrato";
+import { extrairTextoDoPdf } from "@/lib/ia/pdf-texto";
+
+/**
+ * Extrai o texto de um anexo para alimentar o chatbot do contrato, sem nunca
+ * interromper o upload. Só tenta em PDF; imagem/escaneado ou falha de parse
+ * retornam null — o contrato e o arquivo seguem normalmente, o chat apenas não
+ * terá esse documento na base.
+ */
+async function extrairTextoSeguro(arquivo: File, bytes: ArrayBuffer): Promise<string | null> {
+  if (arquivo.type !== "application/pdf") return null;
+  try {
+    const texto = await extrairTextoDoPdf(Buffer.from(bytes));
+    return texto.trim() || null;
+  } catch (err) {
+    console.error(`Falha ao extrair texto de ${arquivo.name} para o chatbot:`, err);
+    return null;
+  }
+}
 
 function proximaRef(refs: string[]): string {
   const max = refs.reduce((m, r) => {
@@ -19,15 +37,21 @@ const MAX_TENTATIVAS_REF = 5;
 
 /**
  * Calcula o próximo ref e insere o contrato, tentando de novo se colidir com
- * um ref criado por outra requisição entre o SELECT e o INSERT (ref tem
- * unique constraint no banco — 23505 é o código de unique_violation do Postgres).
+ * um ref criado por outra requisição entre o SELECT e o INSERT (ref é unique
+ * por org no banco — 23505 é o código de unique_violation do Postgres).
+ *
+ * A numeração é por imobiliária: cada org tem sua própria sequência começando
+ * em LOC-0001. O filtro por org_id é explícito mesmo o RLS já restringindo a
+ * leitura — um contador que depende de RLS implícito silenciosamente pularia
+ * números se a policy mudasse.
  */
 async function inserirContratoComRefUnica(
   supabase: Awaited<ReturnType<typeof createClient>>,
+  orgId: string,
   montarInsert: (ref: string) => Record<string, unknown>,
 ): Promise<{ ref: string; id: string }> {
   for (let tentativa = 0; tentativa < MAX_TENTATIVAS_REF; tentativa++) {
-    const { data: existentes } = await supabase.from("contratos").select("ref");
+    const { data: existentes } = await supabase.from("contratos").select("ref").eq("org_id", orgId);
     const ref = proximaRef(((existentes as { ref: string }[] | null) ?? []).map((r) => r.ref));
 
     const { data, error } = await supabase.from("contratos").insert(montarInsert(ref)).select("id").single();
@@ -66,6 +90,9 @@ export async function criarContrato(formData: FormData) {
   if (profile?.papel !== "admin") {
     throw new Error("Apenas administradores podem cadastrar contratos.");
   }
+  if (!profile.orgId) {
+    throw new Error("Seu usuário não está vinculado a uma imobiliária.");
+  }
 
   const supabase = await createClient();
 
@@ -80,8 +107,9 @@ export async function criarContrato(formData: FormData) {
 
   // Insere o contrato (com retry em caso de colisão de ref) e recupera o UUID
   // pra vincular os documentos.
-  const { ref, id: novoContratoId } = await inserirContratoComRefUnica(supabase, (ref) => ({
+  const { ref, id: novoContratoId } = await inserirContratoComRefUnica(supabase, profile.orgId, (ref) => ({
     ref,
+    org_id: profile.orgId,
     tipo: get("tipo") || "Residencial",
     imovel,
     endereco: get("endereco") || null,
@@ -111,7 +139,10 @@ export async function criarContrato(formData: FormData) {
     for (const arquivo of validos) {
       const nome = arquivo.name;
       const safeName = `${Date.now()}-${nome.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-      const storagePath = `${ref}/${safeName}`;
+      // Prefixo de org: refs são sequenciais por imobiliária, então LOC-0001
+      // existe em várias orgs — sem o prefixo, dois contratos homônimos de
+      // imobiliárias diferentes disputariam o mesmo caminho no bucket.
+      const storagePath = `${profile.orgId}/${ref}/${safeName}`;
 
       const bytes = await arquivo.arrayBuffer();
       const { error: upErr } = await admin.storage
@@ -119,10 +150,16 @@ export async function criarContrato(formData: FormData) {
         .upload(storagePath, bytes, { contentType: arquivo.type || "application/octet-stream" });
 
       if (!upErr) {
+        // Extrai o texto do PDF uma vez, aqui, para o chatbot do contrato não
+        // precisar re-baixar e re-parsear a cada pergunta. Best-effort: PDF
+        // escaneado ou falha de parse só deixa `texto` nulo — não trava o upload.
+        const texto = await extrairTextoSeguro(arquivo, bytes);
+
         const { error: insertDocErr } = await admin.from("documentos").insert({
           contrato_id: novoContratoId,
           nome,
           storage_path: storagePath,
+          texto,
         });
         if (insertDocErr) falhas.push(nome);
       } else {
