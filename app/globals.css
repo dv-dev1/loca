@@ -32,7 +32,7 @@
 
   /* Tipografia */
   --font-display: var(--ff-display), "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
-  --font-body: var(--ff-body), "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--ff-body), "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--ff-mono), "IBM Plex Mono", ui-monospace, monospace;
 
   /* Sombra (rara — editorial usa hairline, não sombra) */

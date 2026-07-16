@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Hanken_Grotesk, IBM_Plex_Mono } from "next/font/google";
+import { Bricolage_Grotesque, IBM_Plex_Mono, Inter } from "next/font/google";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
@@ -8,7 +8,9 @@ const display = Bricolage_Grotesque({
   weight: ["500", "600", "700", "800"],
 });
 
-const body = Hanken_Grotesk({
+// Corpo em Inter: neutra e altamente legível em texto corrido. A personalidade
+// do "Editorial Arquitetural" segue nos títulos (Bricolage) e nos números (mono).
+const body = Inter({
   variable: "--ff-body",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
