@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { Contrato } from "@/app/_data/contratos";
 import { Anotacoes } from "./Anotacoes";
+import { ChatContrato } from "./ChatContrato";
 import { apagarContrato } from "./actions";
 
 type CampoKey =
@@ -167,6 +168,8 @@ export function ContratoCorpo({ contrato }: { contrato: Contrato }) {
             )}
           </dl>
         </section>
+
+        <ChatContrato contratoRef={contrato.ref} />
       </div>
 
       <div className="flex flex-col gap-10">
